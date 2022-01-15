@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ElectionTimeout {
 
+    public static final ElectionTimeout NONE = new ElectionTimeout(new NullScheduledFuture());
     private final ScheduledFuture<?> scheduledFuture;
 
     public ElectionTimeout(ScheduledFuture<?> scheduledFuture) {

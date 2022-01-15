@@ -4,7 +4,7 @@ package com.thzc.ttraft.core.node.role;
 public class RequestVoteResult {
 
     private int term;
-    private final boolean voteGranted; // 是给candidate投票
+    private final boolean voteGranted; // 是否给candidate投票
 
     public RequestVoteResult(int term, boolean voteGranted) {
         this.term = term;

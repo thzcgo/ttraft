@@ -3,7 +3,7 @@ package com.thzc.ttraft.core.node.role;
 /*
 *  candidate 发送给 follower 请求投票
 * */
-public class RequestVote {
+public class RequestVoteRpc {
     private int term;
     private NodeId candidateId; // 一般为
     private int lastLogIndex = 0;
