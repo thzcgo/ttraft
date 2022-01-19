@@ -34,7 +34,7 @@ public abstract class AbstractEntrySequence implements EntrySequence{
         return doGetLastLogIndex();
     }
 
-    private int doGetLastLogIndex() {
+    public int doGetLastLogIndex() {
         return nextLogIndex - 1;
     }
 

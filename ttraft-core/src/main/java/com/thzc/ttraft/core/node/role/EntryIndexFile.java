@@ -1,5 +1,6 @@
 package com.thzc.ttraft.core.node.role;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -113,6 +114,7 @@ public class EntryIndexFile implements Iterable<EntryIndexItem>{
         return new EntryIndexIterator(entryIndexCount, minEntryIndex);
     }
 
+
     private class EntryIndexIterator implements Iterator<EntryIndexItem> {
         private final int entryIndexCount;
         private int currentEntryIndex;
@@ -147,5 +149,16 @@ public class EntryIndexFile implements Iterable<EntryIndexItem>{
 
     public int getMaxEntryIndex() {
         return maxEntryIndex;
+    }
+
+    public long getOffset(int entryIndex) {
+        return get(entryIndex).getOffset();
+    }
+
+    public EntryIndexItem get(int entryIndex) {
+        if (entryIndex < minEntryIndex || entryIndex > maxEntryIndex) {
+            throw new IllegalArgumentException("index < min or index > max");
+        }
+        return entryIndexItemMap.get(entryIndex);
     }
 }

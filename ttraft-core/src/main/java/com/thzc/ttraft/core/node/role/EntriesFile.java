@@ -30,7 +30,7 @@ public class EntriesFile {
     }
 
     // 从指定偏移加载日志条目
-    public Entry loadEntry(long offset, EntryFactory factory) throws IOException {
+    public Entry loadEntry(long offset) throws IOException {
         if (offset > seekableFile.size()) throw new IllegalArgumentException("偏移值异常");
         seekableFile.seek(offset);
         int kind = seekableFile.readInt();
