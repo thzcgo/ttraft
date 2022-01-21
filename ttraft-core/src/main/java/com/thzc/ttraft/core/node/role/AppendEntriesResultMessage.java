@@ -5,6 +5,14 @@ public class AppendEntriesResultMessage {
     private AppendEntriesRpc appendEntriesRpc;
     private AppendEntriesResult appendEntriesResult;
 
+    private final NodeId sourceNodeId;
+
+    public AppendEntriesResultMessage(AppendEntriesRpc appendEntriesRpc, AppendEntriesResult appendEntriesResult, NodeId sourceNodeId) {
+        this.appendEntriesRpc = appendEntriesRpc;
+        this.appendEntriesResult = appendEntriesResult;
+        this.sourceNodeId = sourceNodeId;
+    }
+
     public AppendEntriesRpc getAppendEntriesRpc() {
         return appendEntriesRpc;
     }
@@ -19,5 +27,9 @@ public class AppendEntriesResultMessage {
 
     public void setAppendEntriesResult(AppendEntriesResult appendEntriesResult) {
         this.appendEntriesResult = appendEntriesResult;
+    }
+
+    public NodeId getSourceNodeId() {
+        return sourceNodeId;
     }
 }

@@ -18,6 +18,10 @@ public class GroupMember {
         return endpoint;
     }
 
+    public NodeId getId() {
+        return endpoint.getId();
+    }
+
     public ReplicatingState getReplicatingState() {
         return replicatingState;
     }
@@ -41,5 +45,13 @@ public class GroupMember {
 
     boolean idEquals(NodeId id) {
         return endpoint.getId().equals(id);
+    }
+
+    boolean advanceReplicationState(int lastEntryIndex) {
+        return ensureReplicatingState().advance(lastEntryIndex);
+    }
+
+    boolean backOffNextIndex() {
+        return ensureReplicatingState().backOffNextIndex();
     }
 }

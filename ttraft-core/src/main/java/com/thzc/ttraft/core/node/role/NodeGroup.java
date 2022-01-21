@@ -62,4 +62,17 @@ public class NodeGroup {
     public int getCount() {
         return memberMap.size();
     }
+
+    // 计算过半commitIndex
+    public int getMatchIndexOfMajor() {
+        ArrayList<NodeMatchIndex> matchIndices = new ArrayList<>();
+        for (GroupMember member : memberMap.values()) {
+            if (!member.idEquals(selfId)) matchIndices.add(new NodeMatchIndex(member.getId(), member.getMatchIndex()));
+        }
+        int count = matchIndices.size();
+        if (count == 0) throw new IllegalStateException("无稳定节点");
+        Collections.sort(matchIndices);
+        return matchIndices.get(count/2).getMatchIndex();
+    }
+
 }

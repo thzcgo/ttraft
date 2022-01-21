@@ -12,6 +12,16 @@ public class NodeContext {
     private TaskExecutor taskExecutor;
     private NodeStore store;
 
+    private Log log;
+
+    public Log getLog() {
+        return log;
+    }
+
+    public void setLog(Log log) {
+        this.log = log;
+    }
+
     public NodeId getSelfId() {
         return selfId;
     }

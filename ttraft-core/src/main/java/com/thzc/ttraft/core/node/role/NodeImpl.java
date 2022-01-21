@@ -1,7 +1,10 @@
 package com.thzc.ttraft.core.node.role;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.FutureCallback;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 public class NodeImpl implements Node{
@@ -9,6 +12,18 @@ public class NodeImpl implements Node{
     private final NodeContext context;
     private boolean started; // 是否启动
     private AbstractNodeRole role; // 当前的角色
+
+    // callback for async tasks.
+    private static final FutureCallback<Object> LOGGING_FUTURE_CALLBACK = new FutureCallback<Object>() {
+        @Override
+        public void onSuccess(@Nullable Object result) {
+        }
+
+        @Override
+        public void onFailure(@Nonnull Throwable t) {
+
+        }
+    };
 
     public NodeImpl(NodeContext context) {
         this.context = context;
@@ -64,12 +79,13 @@ public class NodeImpl implements Node{
         // follower -> candidate
         changeToRole(new CandidateNodeRole(newTerm, scheduleElectionTimeout()));
 
+        EntryMeta lastEntryMeta = context.getLog().getLastEntryMeta();
         // 发送 RequestVote
         RequestVoteRpc rpc = new RequestVoteRpc();
         rpc.setTerm(newTerm);
         rpc.setCandidateId(context.getSelfId());
-        rpc.setLastLogIndex(0);
-        rpc.setLastLogTerm(0);
+        rpc.setLastLogIndex(lastEntryMeta.getIndex());
+        rpc.setLastLogTerm(lastEntryMeta.getTerm());
         context.getConnector().sendRequestVote(rpc, context.getGroup().listEndpointExceptSelf());
     }
 
@@ -90,7 +106,8 @@ public class NodeImpl implements Node{
             return new RequestVoteResult(role.getTerm(), false);
         }
 
-        boolean voteForCandidate = true;
+        boolean voteForCandidate = !context.getLog().isNewerThen(rpc.getLastLogIndex(), rpc.getLastLogTerm());
+
         if (rpc.getTerm() > role.getTerm()) {
             return new RequestVoteResult(rpc.getTerm(), voteForCandidate);
         }
@@ -157,10 +174,13 @@ public class NodeImpl implements Node{
         return context.getScheduler().schedulerLogReplicationTask(this::replicateLog);
     }
 
+
     // leader 发送心跳信息
-    private void replicateLog() {
-        context.getTaskExecutor().submit(this::doReplicateLog);
+    void replicateLog() {
+        context.getTaskExecutor().submit(this::doReplicateLog, LOGGING_FUTURE_CALLBACK);
     }
+
+
 
     private void doReplicateLog() {
         for (GroupMember member : context.getGroup().listReplicationTarget()) {
@@ -175,6 +195,11 @@ public class NodeImpl implements Node{
         rpc.setPrevLogIndex(0);
         rpc.setPrevLogTerm(0);
         rpc.setLeaderCommit(0);
+        context.getConnector().sendAppendEntries(rpc,member.getEndpoint());
+    }
+
+    private void doReplicateLog(GroupMember member, int maxEntries) {
+        AppendEntriesRpc rpc = context.getLog().createAppendEntriesRpc(role.getTerm(), context.getSelfId(), member.getNextIndex(), maxEntries);
         context.getConnector().sendAppendEntries(rpc,member.getEndpoint());
     }
 
@@ -213,7 +238,11 @@ public class NodeImpl implements Node{
     }
 
     private boolean appendEntries(AppendEntriesRpc rpc) {
-        return true;
+        boolean b = context.getLog().appednEntriesFromLeader(rpc.getPrevLogIndex(), rpc.getPrevLogTerm(), rpc.getEntries());
+        if (b) {
+            context.getLog().advanceCommitIndex(Math.min(rpc.getLeaderCommit(), rpc.getLastEntryIndex()), rpc.getTerm());
+        }
+        return b;
     }
 
     // leader 节点收到心跳回应
@@ -231,6 +260,21 @@ public class NodeImpl implements Node{
         }
         if (role.getName() != RoleName.LEADER) {
             //
+            return;
+        }
+
+        NodeId sourceId = resultMessage.getSourceNodeId();
+        GroupMember member = context.getGroup().getMember(sourceId);
+        if (member == null) return;
+        AppendEntriesRpc rpc = resultMessage.getAppendEntriesRpc();
+        if (result.isSuccess()) {
+            if (member.advanceReplicationState(rpc.getLastEntryIndex())) {
+                context.getLog().advanceCommitIndex(context.getGroup().getMatchIndexOfMajor(), role.getTerm());
+            } else {
+                if (!member.backOffNextIndex()) {
+
+                }
+            }
         }
     }
 
