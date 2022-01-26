@@ -93,10 +93,8 @@ public class NodeImpl implements Node{
     @Subscribe
     public void onReceiveRequestVoteRpc(RequestVoteRpcMessage rpcMessage) {
         context.getTaskExecutor().submit(
-                () -> context.getConnector().replyRequestVote(
-                        doProcessRequestVoteRpc(rpcMessage),
-                        context.getGroup().findMember(rpcMessage.getSourceNodeId()).getEndpoint()
-                )
+                () -> context.getConnector().replyRequestVote(doProcessRequestVoteRpc(rpcMessage), rpcMessage),
+                LOGGING_FUTURE_CALLBACK
         );
     }
 
@@ -206,11 +204,9 @@ public class NodeImpl implements Node{
     // 非leader节点收到心跳信息
     @Subscribe
     public void onReceiveAppendEntriesRpc(AppendEntriesRpcMessage rpcMessage) {
-        context.getTaskExecutor().submit(
-                () -> context.getConnector().replyAppendEntries(
-                        doProcessAppendEntriesRpc(rpcMessage),
-                        context.getGroup().findMember(rpcMessage.getSourceNodeId()).getEndpoint()
-                )
+        context.getTaskExecutor().submit(() ->
+                        context.getConnector().replyAppendEntries(doProcessAppendEntriesRpc(rpcMessage), rpcMessage),
+                LOGGING_FUTURE_CALLBACK
         );
     }
 

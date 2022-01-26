@@ -1,5 +1,7 @@
 package com.thzc.ttraft.core.node.role;
 
+import com.thzc.ttraft.core.rpc.nio.Address;
+
 public class NodeEndpoint {
 
     private final NodeId id;
@@ -22,21 +24,5 @@ public class NodeEndpoint {
         return address;
     }
 
-    public static class Address {
-        private final String host;
-        private final int port;
 
-        public Address(String host, int port) {
-            this.host = host;
-            this.port = port;
-        }
-
-        public String getHost() {
-            return host;
-        }
-
-        public int getPort() {
-            return port;
-        }
-    }
 }
