@@ -16,6 +16,11 @@ public class LeaderNodeRole extends AbstractNodeRole{
     }
 
     @Override
+    public NodeId getLeaderId(NodeId selfId) {
+        return selfId;
+    }
+
+    @Override
     public String toString() {
         return "LeaderNodeRole{" +
                 "term=" + term +

@@ -1,5 +1,10 @@
 package com.thzc.ttraft.kv.command;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.thzc.ttraft.core.proto.Protos;
+import com.thzc.ttraft.kv.proto.kvstore;
+
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -29,6 +34,21 @@ public class SetCommand {
 
     public byte[] getValue() {
         return value;
+    }
+
+    public static SetCommand fromBytes(byte[] bytes) {
+        try {
+            kvstore.SetCommand setCommand = kvstore.SetCommand.parseFrom(bytes);
+            return new SetCommand(setCommand.getRequestId(), setCommand.getKey(), setCommand.getValue().toByteArray());
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalStateException("反序列化 set 命令 失败");
+        }
+    }
+
+    public byte[] toBytes() {
+        return kvstore.SetCommand.newBuilder().setRequestId(this.requestId)
+                .setKey(this.key)
+                .setValue(ByteString.copyFrom(this.value)).build().toByteArray();
     }
 
     @Override

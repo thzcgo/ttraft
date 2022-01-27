@@ -15,7 +15,7 @@ public abstract class AbstractRpcMessage<T> {
         this.channel = channel;
     }
 
-    public T get() {
+    public T getRpc() {
         return this.rpc;
     }
 

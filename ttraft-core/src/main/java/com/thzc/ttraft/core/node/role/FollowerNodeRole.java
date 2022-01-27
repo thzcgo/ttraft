@@ -19,6 +19,11 @@ public class FollowerNodeRole extends AbstractNodeRole{
         electionTimeout.cancel();
     }
 
+    @Override
+    public NodeId getLeaderId(NodeId selfId) {
+        return leaderId;
+    }
+
     public NodeId getVotedFor() {
         return votedFor;
     }

@@ -2,6 +2,9 @@ package com.thzc.ttraft.core.node.role;
 
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.FutureCallback;
+import com.thzc.ttraft.core.log.statemachine.StateMachine;
+import com.thzc.ttraft.core.rpc.nio.AppendEntriesRpcMessage;
+import com.thzc.ttraft.core.rpc.nio.RequestVoteRpcMessage;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -12,6 +15,7 @@ public class NodeImpl implements Node{
     private final NodeContext context;
     private boolean started; // 是否启动
     private AbstractNodeRole role; // 当前的角色
+    private StateMachine stateMachine;
 
     // callback for async tasks.
     private static final FutureCallback<Object> LOGGING_FUTURE_CALLBACK = new FutureCallback<Object>() {
@@ -30,6 +34,11 @@ public class NodeImpl implements Node{
     }
 
     @Override
+    public void registerStateMachine(StateMachine stateMachine) {
+        this.stateMachine = stateMachine;
+    }
+
+    @Override
     public synchronized void start() {
         if (started) return;
 
@@ -39,6 +48,11 @@ public class NodeImpl implements Node{
 
         changeToRole(new FollowerNodeRole(store.getTerm(), store.getVotedFor(), null, scheduleElectionTimeout()));
         started = true;
+    }
+
+    @Override
+    public void appendLog(byte[] commandBytes) {
+
     }
 
     private ElectionTimeout scheduleElectionTimeout() {
@@ -57,7 +71,7 @@ public class NodeImpl implements Node{
     }
 
     @Override
-    public void close() throws InterruptedException {
+    public void stop() throws InterruptedException {
         if (!started) throw new IllegalStateException("节点未启动");
 
         context.getScheduler().stop();
@@ -65,6 +79,12 @@ public class NodeImpl implements Node{
         context.getTaskExecutor().shutdown();
 
         started = false;
+    }
+
+    @Override
+    @Nonnull
+    public RoleNameAndLeaderId getRoleNameAndLeaderId() {
+        return role.getNameAndLeaderId(context.getSelfId());
     }
 
     // 选举超时
