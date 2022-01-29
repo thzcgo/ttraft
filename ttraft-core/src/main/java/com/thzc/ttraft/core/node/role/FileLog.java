@@ -1,5 +1,7 @@
 package com.thzc.ttraft.core.node.role;
 
+import com.google.common.eventbus.EventBus;
+
 import java.io.File;
 
 public class FileLog extends AbstractLog{
@@ -17,4 +19,6 @@ public class FileLog extends AbstractLog{
         }
 
     }
+
+
 }

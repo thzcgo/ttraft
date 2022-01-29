@@ -6,23 +6,17 @@ public class NodeContext {
 
     private NodeId selfId;
     private NodeGroup group;
+    private Log log;
     private Connector connector;
+    private NodeStore store;
     private Scheduler scheduler;
+    private NodeMode mode;
+    private NodeConfig config;
     private EventBus eventBus;
     private TaskExecutor taskExecutor;
-    private NodeStore store;
+    private TaskExecutor groupConfigChangeTaskExecutor;
 
-    private Log log;
-
-    public Log getLog() {
-        return log;
-    }
-
-    public void setLog(Log log) {
-        this.log = log;
-    }
-
-    public NodeId getSelfId() {
+    public NodeId selfId() {
         return selfId;
     }
 
@@ -30,7 +24,7 @@ public class NodeContext {
         this.selfId = selfId;
     }
 
-    public NodeGroup getGroup() {
+    public NodeGroup group() {
         return group;
     }
 
@@ -38,7 +32,15 @@ public class NodeContext {
         this.group = group;
     }
 
-    public Connector getConnector() {
+    public Log log() {
+        return log;
+    }
+
+    public void setLog(Log log) {
+        this.log = log;
+    }
+
+    public Connector connector() {
         return connector;
     }
 
@@ -46,7 +48,15 @@ public class NodeContext {
         this.connector = connector;
     }
 
-    public Scheduler getScheduler() {
+    public NodeStore store() {
+        return store;
+    }
+
+    public void setStore(NodeStore store) {
+        this.store = store;
+    }
+
+    public Scheduler scheduler() {
         return scheduler;
     }
 
@@ -54,7 +64,23 @@ public class NodeContext {
         this.scheduler = scheduler;
     }
 
-    public EventBus getEventBus() {
+    public NodeMode mode() {
+        return mode;
+    }
+
+    public void setMode(NodeMode mode) {
+        this.mode = mode;
+    }
+
+    public NodeConfig config() {
+        return config;
+    }
+
+    public void setConfig(NodeConfig config) {
+        this.config = config;
+    }
+
+    public EventBus eventBus() {
         return eventBus;
     }
 
@@ -62,7 +88,7 @@ public class NodeContext {
         this.eventBus = eventBus;
     }
 
-    public TaskExecutor getTaskExecutor() {
+    public TaskExecutor taskExecutor() {
         return taskExecutor;
     }
 
@@ -70,11 +96,12 @@ public class NodeContext {
         this.taskExecutor = taskExecutor;
     }
 
-    public NodeStore getStore() {
-        return store;
+    public TaskExecutor groupConfigChangeTaskExecutor() {
+        return groupConfigChangeTaskExecutor;
     }
 
-    public void setStore(NodeStore store) {
-        this.store = store;
+    public void setGroupConfigChangeTaskExecutor(TaskExecutor groupConfigChangeTaskExecutor) {
+        this.groupConfigChangeTaskExecutor = groupConfigChangeTaskExecutor;
     }
+
 }
