@@ -1,5 +1,7 @@
 package com.thzc.ttraft.core.node.role;
 
+import com.google.common.eventbus.EventBus;
+
 import java.util.Collections;
 import java.util.List;
 

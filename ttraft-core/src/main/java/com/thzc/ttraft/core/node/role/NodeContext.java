@@ -1,6 +1,7 @@
 package com.thzc.ttraft.core.node.role;
 
 import com.google.common.eventbus.EventBus;
+import com.thzc.ttraft.core.NodeConfig;
 
 public class NodeContext {
 

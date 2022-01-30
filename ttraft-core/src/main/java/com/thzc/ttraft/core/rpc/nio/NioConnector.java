@@ -32,6 +32,14 @@ public class NioConnector implements Connector {
     private final OutboundChannelGroup outboundChannelGroup;
 
 
+    public NioConnector(NodeId selfNodeId, EventBus eventBus, int port) {
+        this(new NioEventLoopGroup(), false, selfNodeId, eventBus, port);
+    }
+
+    public NioConnector(NioEventLoopGroup workerNioEventLoopGroup, NodeId selfNodeId, EventBus eventBus, int port) {
+        this(workerNioEventLoopGroup, true, selfNodeId, eventBus, port);
+    }
+
     public NioConnector(NioEventLoopGroup workerNioEventLoopGroup, boolean workerGroupShared, NodeId selfNodeId, EventBus eventBus, int port) {
         this.workerNioEventLoopGroup = workerNioEventLoopGroup;
         this.workerGroupShared = workerGroupShared;

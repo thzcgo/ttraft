@@ -1,10 +1,11 @@
 package com.thzc.ttraft.core.node.role;
 
-import java.util.EventListener;
+import com.thzc.ttraft.core.NodeConfig;
+
 import java.util.Random;
 import java.util.concurrent.*;
 
-public class DefaultStueduler implements Scheduler{
+public class DefaultScheduler implements Scheduler{
 
     private final int minElectionTimeout; // 最小选举超时时间
     private final int maxElectionTimeout; // 最大选举超时时间
@@ -14,7 +15,12 @@ public class DefaultStueduler implements Scheduler{
 
     private final ScheduledExecutorService scheduledExecutorService;
 
-    public DefaultStueduler(int minElectionTimeout, int maxElectionTimeout, int logReplicationDelay, int logReplicationInterval) {
+    public DefaultScheduler(NodeConfig config) {
+        this(config.getMinElectionTimeout(), config.getMaxElectionTimeout(), config.getLogReplicationDelay(),
+                config.getLogReplicationInterval());
+    }
+
+    public DefaultScheduler(int minElectionTimeout, int maxElectionTimeout, int logReplicationDelay, int logReplicationInterval) {
         if (minElectionTimeout <= 0 || maxElectionTimeout <= 0 ||
         minElectionTimeout > maxElectionTimeout) {
             throw new IllegalArgumentException("选举时间为0 或 min > max");

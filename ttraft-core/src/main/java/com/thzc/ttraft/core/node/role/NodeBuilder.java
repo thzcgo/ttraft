@@ -2,7 +2,9 @@ package com.thzc.ttraft.core.node.role;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
+import com.thzc.ttraft.core.NodeConfig;
 import com.thzc.ttraft.core.rpc.nio.NioConnector;
+import com.thzc.ttraft.core.support.ListeningTaskExecutor;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import javax.annotation.Nonnull;
@@ -246,7 +248,7 @@ public class NodeBuilder {
         NodeContext context = new NodeContext();
         context.setGroup(group);
         context.setMode(evaluateMode());
-        context.setLog(log != null ? log : new MemoryLog(eventBus));
+        context.setLog(log != null ? log : new MemoryLog());
         context.setStore(store != null ? store : new MemoryNodeStore());
         context.setSelfId(selfId);
         context.setConfig(config);
@@ -269,7 +271,7 @@ public class NodeBuilder {
      */
     @Nonnull
     private NioConnector createNioConnector() {
-        int port = group.findSelf().getEndpoint().getPort();
+        int port = group.findSelf().getEndpoint().getAddress().getPort();
         if (workerNioEventLoopGroup != null) {
             return new NioConnector(workerNioEventLoopGroup, selfId, eventBus, port);
         }

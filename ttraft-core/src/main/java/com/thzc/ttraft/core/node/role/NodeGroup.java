@@ -1,5 +1,6 @@
 package com.thzc.ttraft.core.node.role;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -75,4 +76,12 @@ public class NodeGroup {
         return matchIndices.get(count/2).getMatchIndex();
     }
 
+    boolean isStandalone() {
+        return memberMap.size() == 1 && memberMap.containsKey(selfId);
+    }
+
+    @Nonnull
+    GroupMember findSelf() {
+        return findMember(selfId);
+    }
 }
