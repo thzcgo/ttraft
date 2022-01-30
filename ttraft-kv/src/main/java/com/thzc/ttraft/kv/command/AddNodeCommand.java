@@ -1,7 +1,7 @@
 package com.thzc.ttraft.kv.command;
 
 
-import com.thzc.ttraft.core.node.role.NodeEndpoint;
+import com.thzc.ttraft.core.node.NodeEndpoint;
 
 public class AddNodeCommand {
 

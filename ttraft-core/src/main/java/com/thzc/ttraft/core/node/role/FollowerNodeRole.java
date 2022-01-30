@@ -1,5 +1,8 @@
 package com.thzc.ttraft.core.node.role;
 
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.schedule.ElectionTimeout;
+
 public class FollowerNodeRole extends AbstractNodeRole{
 
     private final NodeId votedFor; // 投过票的节点，可能为空

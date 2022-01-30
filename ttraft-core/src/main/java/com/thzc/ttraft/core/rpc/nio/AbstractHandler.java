@@ -1,7 +1,9 @@
 package com.thzc.ttraft.core.rpc.nio;
 
 import com.google.common.eventbus.EventBus;
-import com.thzc.ttraft.core.node.role.*;
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.rpc.Channel;
+import com.thzc.ttraft.core.rpc.message.*;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;

@@ -1,8 +1,8 @@
 package com.thzc.ttraft.core.rpc.nio;
 
 import com.google.common.eventbus.EventBus;
-import com.thzc.ttraft.core.node.role.NodeEndpoint;
-import com.thzc.ttraft.core.node.role.NodeId;
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.rpc.Address;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.Channel;
@@ -46,7 +46,7 @@ public class OutboundChannelGroup {
 //                            ", cause " + cause.getMessage(), cause);
                 }
             }
-            throw new ChannelException("failed to get channel to node " + nodeId, e);
+            throw new com.thzc.ttraft.core.rpc.ChannelException("failed to get channel to node " + nodeId, e);
         }
     }
 
@@ -66,7 +66,7 @@ public class OutboundChannelGroup {
                 });
         ChannelFuture future = bootstrap.connect(address.getHost(), address.getPort()).sync();
         if (!future.isSuccess()) {
-            throw new ChannelException("failed to connect", future.cause());
+            throw new com.thzc.ttraft.core.rpc.ChannelException("failed to connect", future.cause());
         }
 //        logger.debug("channel OUTBOUND-{} connected", nodeId);
         Channel nettyChannel = future.channel();

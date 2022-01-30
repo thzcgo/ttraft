@@ -1,8 +1,9 @@
 package com.thzc.ttraft.core.rpc.nio;
 
 import com.google.protobuf.MessageLite;
-import com.thzc.ttraft.core.node.role.NodeId;
-import com.thzc.ttraft.core.node.role.RequestVoteRpc;
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.rpc.message.MessageConstants;
+import com.thzc.ttraft.core.rpc.message.RequestVoteRpc;
 import com.thzc.ttraft.core.proto.Protos;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

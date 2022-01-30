@@ -1,7 +1,7 @@
 package com.thzc.ttraft.kv.command;
 
 
-import com.thzc.ttraft.core.node.role.NodeId;
+import com.thzc.ttraft.core.node.NodeId;
 
 public class RemoveNodeCommand {
 

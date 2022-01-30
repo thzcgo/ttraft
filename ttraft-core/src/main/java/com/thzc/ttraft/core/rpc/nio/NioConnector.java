@@ -2,7 +2,12 @@ package com.thzc.ttraft.core.rpc.nio;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
-import com.thzc.ttraft.core.node.role.*;
+import com.thzc.ttraft.core.rpc.Channel;
+import com.thzc.ttraft.core.rpc.ChannelConnectException;
+import com.thzc.ttraft.core.rpc.Connector;
+import com.thzc.ttraft.core.node.NodeEndpoint;
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.rpc.message.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;

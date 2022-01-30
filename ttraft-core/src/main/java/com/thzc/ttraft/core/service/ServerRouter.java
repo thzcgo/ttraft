@@ -1,6 +1,6 @@
 package com.thzc.ttraft.core.service;
 
-import com.thzc.ttraft.core.node.role.NodeId;
+import com.thzc.ttraft.core.node.NodeId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

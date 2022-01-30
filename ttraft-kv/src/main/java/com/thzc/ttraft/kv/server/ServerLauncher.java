@@ -1,9 +1,9 @@
 package com.thzc.ttraft.kv.server;
 
-import com.thzc.ttraft.core.node.role.Node;
-import com.thzc.ttraft.core.node.role.NodeBuilder;
-import com.thzc.ttraft.core.node.role.NodeEndpoint;
-import com.thzc.ttraft.core.node.role.NodeId;
+import com.thzc.ttraft.core.node.Node;
+import com.thzc.ttraft.core.node.NodeBuilder;
+import com.thzc.ttraft.core.node.NodeEndpoint;
+import com.thzc.ttraft.core.node.NodeId;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

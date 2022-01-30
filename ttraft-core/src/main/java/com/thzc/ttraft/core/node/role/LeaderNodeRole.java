@@ -1,5 +1,8 @@
 package com.thzc.ttraft.core.node.role;
 
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.schedule.LogReplicationTask;
+
 public class LeaderNodeRole extends AbstractNodeRole{
 
     private final LogReplicationTask logReplicationTask;

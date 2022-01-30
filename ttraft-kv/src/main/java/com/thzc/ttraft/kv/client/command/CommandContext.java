@@ -1,7 +1,7 @@
 package com.thzc.ttraft.kv.client.command;
 
-import com.thzc.ttraft.core.node.role.NodeId;
-import com.thzc.ttraft.core.rpc.nio.Address;
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.rpc.Address;
 import com.thzc.ttraft.core.service.ServerRouter;
 import com.thzc.ttraft.kv.client.Client;
 import com.thzc.ttraft.kv.client.SocketChannel;

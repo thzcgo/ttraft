@@ -1,6 +1,6 @@
 package com.thzc.ttraft.kv.server;
 
-import com.thzc.ttraft.core.node.role.Node;
+import com.thzc.ttraft.core.node.Node;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;

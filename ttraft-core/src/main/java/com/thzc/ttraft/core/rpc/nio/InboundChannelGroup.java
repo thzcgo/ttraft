@@ -1,6 +1,6 @@
 package com.thzc.ttraft.core.rpc.nio;
 
-import com.thzc.ttraft.core.node.role.NodeId;
+import com.thzc.ttraft.core.node.NodeId;
 import io.netty.channel.ChannelFutureListener;
 
 import java.util.List;

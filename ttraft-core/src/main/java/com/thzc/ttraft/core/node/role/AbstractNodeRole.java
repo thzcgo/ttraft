@@ -1,5 +1,7 @@
 package com.thzc.ttraft.core.node.role;
 
+import com.thzc.ttraft.core.node.NodeId;
+
 public abstract class AbstractNodeRole {
 
     private final RoleName name;

@@ -1,7 +1,7 @@
 package com.thzc.ttraft.core.service;
 
 
-import com.thzc.ttraft.core.node.role.NodeId;
+import com.thzc.ttraft.core.node.NodeId;
 
 public class RedirectException extends ChannelException {
 

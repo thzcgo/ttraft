@@ -1,6 +1,7 @@
 package com.thzc.ttraft.core.node.role;
 
 import com.google.common.base.Preconditions;
+import com.thzc.ttraft.core.node.NodeId;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

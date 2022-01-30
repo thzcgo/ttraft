@@ -2,7 +2,6 @@ package com.thzc.ttraft.core.support;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.*;
-import com.thzc.ttraft.core.node.role.AbstractTaskExecutor;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;

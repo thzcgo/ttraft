@@ -1,9 +1,7 @@
 package com.thzc.ttraft.kv.server;
 
 import com.thzc.ttraft.core.log.statemachine.AbstractSingleThreadStateMachine;
-import com.thzc.ttraft.core.log.statemachine.StateMachine;
-import com.thzc.ttraft.core.log.statemachine.StateMachineContext;
-import com.thzc.ttraft.core.node.role.Node;
+import com.thzc.ttraft.core.node.Node;
 import com.thzc.ttraft.core.node.role.RoleName;
 import com.thzc.ttraft.core.node.role.RoleNameAndLeaderId;
 import com.thzc.ttraft.kv.command.*;

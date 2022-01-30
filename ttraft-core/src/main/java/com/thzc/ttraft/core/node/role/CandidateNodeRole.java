@@ -1,5 +1,8 @@
 package com.thzc.ttraft.core.node.role;
 
+import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.core.schedule.ElectionTimeout;
+
 public class CandidateNodeRole extends AbstractNodeRole{
 
     private final int votesCount; // 已得的票数

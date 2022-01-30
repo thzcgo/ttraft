@@ -1,7 +1,7 @@
 package com.thzc.ttraft.core.log.statemachine;
 
-import com.thzc.ttraft.core.node.role.SingleThreadTaskExecutor;
-import com.thzc.ttraft.core.node.role.TaskExecutor;
+import com.thzc.ttraft.core.support.SingleThreadTaskExecutor;
+import com.thzc.ttraft.core.support.TaskExecutor;
 
 public abstract class AbstractSingleThreadStateMachine implements StateMachine{
 
