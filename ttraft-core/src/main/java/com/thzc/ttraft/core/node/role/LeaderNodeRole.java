@@ -12,7 +12,6 @@ public class LeaderNodeRole extends AbstractNodeRole{
         this.logReplicationTask = logReplicationTask;
     }
 
-
     @Override
     public void cancelTimeoutOrTask() {
         logReplicationTask.cancel();

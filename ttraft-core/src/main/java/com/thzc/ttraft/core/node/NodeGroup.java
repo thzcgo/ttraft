@@ -43,13 +43,13 @@ public class NodeGroup {
         return memberMap.get(id);
     }
 
-    // 返回除自己的其他所有节点
     Collection<GroupMember> listReplicationTarget() {
         return memberMap.values().stream().filter(
                 m -> m.idEquals(selfId)
         ).collect(Collectors.toList());
     }
 
+    // 返回除自己的其他所有节点
     public Set<NodeEndpoint> listEndpointExceptSelf() {
         Set<NodeEndpoint> set = new HashSet<>();
         for (GroupMember member : memberMap.values()) {

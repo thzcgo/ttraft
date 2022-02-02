@@ -23,11 +23,11 @@ public class DefaultScheduler implements Scheduler {
     public DefaultScheduler(int minElectionTimeout, int maxElectionTimeout, int logReplicationDelay, int logReplicationInterval) {
         if (minElectionTimeout <= 0 || maxElectionTimeout <= 0 ||
         minElectionTimeout > maxElectionTimeout) {
-            throw new IllegalArgumentException("选举时间为0 或 min > max");
+            throw new IllegalArgumentException("最小或最大选举时间不合法");
         }
         if (logReplicationDelay < 0 ||
         logReplicationInterval <= 0) {
-            throw new IllegalArgumentException("日志复制延迟时间,间隔不合法");
+            throw new IllegalArgumentException("日志复制延迟时间或间隔不合法");
         }
         this.minElectionTimeout = minElectionTimeout;
         this.maxElectionTimeout = maxElectionTimeout;

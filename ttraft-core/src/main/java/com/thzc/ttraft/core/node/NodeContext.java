@@ -12,13 +12,14 @@ public class NodeContext {
 
     private NodeId selfId;
     private NodeGroup group;
-    private Log log;
-    private Connector connector;
     private NodeStore store;
-    private Scheduler scheduler;
     private NodeMode mode;
     private NodeConfig config;
+
+    private Log log;
+    private Connector connector;
     private EventBus eventBus;
+    private Scheduler scheduler;
     private TaskExecutor taskExecutor;
     private TaskExecutor groupConfigChangeTaskExecutor;
 

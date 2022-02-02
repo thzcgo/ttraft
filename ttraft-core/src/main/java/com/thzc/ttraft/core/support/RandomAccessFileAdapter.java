@@ -1,7 +1,5 @@
 package com.thzc.ttraft.core.support;
 
-import com.thzc.ttraft.core.support.SeekableFile;
-
 import java.io.*;
 
 public class RandomAccessFileAdapter implements SeekableFile {

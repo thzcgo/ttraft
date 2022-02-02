@@ -23,49 +23,31 @@ public class NodeImpl implements Node {
     private StateMachine stateMachine;
 
     // callback for async tasks.
-    private static final FutureCallback<Object> LOGGING_FUTURE_CALLBACK = new FutureCallback<Object>() {
-        @Override
-        public void onSuccess(@Nullable Object result) {
-        }
-
-        @Override
-        public void onFailure(@Nonnull Throwable t) {
-
-        }
-    };
-
     public NodeImpl(NodeContext context) {
         this.context = context;
     }
 
     @Override
-    public void registerStateMachine(StateMachine stateMachine) {
-        this.stateMachine = stateMachine;
-    }
-
-    @Override
     public synchronized void start() {
         if (started) return;
-
         context.getEventBus().register(this);
         context.getConnector().initialize();
         NodeStore store = context.getStore();
-
         changeToRole(new FollowerNodeRole(store.getTerm(), store.getVotedFor(), null, scheduleElectionTimeout()));
         started = true;
     }
 
     @Override
-    public void appendLog(byte[] commandBytes) {
-
+    public void stop() throws InterruptedException {
+        if (!started) throw new IllegalStateException("节点未启动");
+        context.getScheduler().stop();
+        context.getConnector().close();
+        context.getTaskExecutor().shutdown();
+        started = false;
     }
 
-    private ElectionTimeout scheduleElectionTimeout() {
-        return context.getScheduler().schedulerElectionTimeout(this::electionTimeout);
-    }
 
-
-    // 角色变更
+    /*********************************  角色变更  *********************************************************/
     private void changeToRole(AbstractNodeRole newRole) {
         NodeStore store = context.getStore();
         store.setTerm(newRole.getTerm());
@@ -75,24 +57,24 @@ public class NodeImpl implements Node {
         role = newRole;
     }
 
-    @Override
-    public void stop() throws InterruptedException {
-        if (!started) throw new IllegalStateException("节点未启动");
-
-        context.getScheduler().stop();
-        context.getConnector().close();
-        context.getTaskExecutor().shutdown();
-
-        started = false;
+    private void changeToFollower(int term, NodeId votedFor, NodeId leaderId, boolean scheduleElectionTimeout) {
+        role.cancelTimeoutOrTask();
+        if (leaderId != null && !leaderId.equals(context.getSelfId())) {
+            //
+        }
+        ElectionTimeout electionTimeout = scheduleElectionTimeout ? scheduleElectionTimeout() : ElectionTimeout.NONE;
+        changeToRole(new FollowerNodeRole(term, votedFor, leaderId, electionTimeout));
     }
 
-    @Override
-    @Nonnull
-    public RoleNameAndLeaderId getRoleNameAndLeaderId() {
-        return role.getNameAndLeaderId(context.getSelfId());
+    /*********************************  选举超时  *********************************************************/
+    /*
+    *  选举超时，当前节点从follower 变成 candidate，向其他节点follower发送 RequestVote 消息
+    *
+    * */
+    private ElectionTimeout scheduleElectionTimeout() {
+        return context.getScheduler().schedulerElectionTimeout(this::electionTimeout);
     }
 
-    // 选举超时
     private void electionTimeout() {
         context.getTaskExecutor().submit(this::doProcessElectionTimeout);
     }
@@ -114,7 +96,11 @@ public class NodeImpl implements Node {
         context.getConnector().sendRequestVote(rpc, context.getGroup().listEndpointExceptSelf());
     }
 
-    // 接收RequestVote消息
+    /******************************* 接收RequestVote消息   **********************************************/
+    /*
+    *  当前节点为 follower，接收到 RequestVote 消息处理后回复 RequestVoteResult 消息
+    *
+    * */
     @Subscribe
     public void onReceiveRequestVoteRpc(RequestVoteRpcMessage rpcMessage) {
         context.getTaskExecutor().submit(
@@ -155,16 +141,10 @@ public class NodeImpl implements Node {
         }
     }
 
-    private void changeToFollower(int term, NodeId votedFor, NodeId leaderId, boolean scheduleElectionTimeout) {
-        role.cancelTimeoutOrTask();
-        if (leaderId != null && !leaderId.equals(context.getSelfId())) {
-            //
-        }
-        ElectionTimeout electionTimeout = scheduleElectionTimeout ? scheduleElectionTimeout() : ElectionTimeout.NONE;
-        changeToRole(new FollowerNodeRole(term, votedFor, leaderId, electionTimeout));
-    }
-
-    // candidaate收到RequestVote响应
+    /******************************* 收到RequestVoteResult响应  **********************************************/
+    /*
+    *  当前节点为 candidate，收到 RequestVoteResult 响应，根据票数开始角色变化
+    * */
     @Subscribe
     public void onReceiveRequestVoteResult(RequestVoteResult result) {
         context.getTaskExecutor().submit(
@@ -193,17 +173,19 @@ public class NodeImpl implements Node {
         }
     }
 
+
+    /*******************************  日志复制任务  **********************************************/
+    /*
+    *  当前节点为leader，给其他节点发送 AppendEntriesRpc 心跳消息
+    * */
     private LogReplicationTask scheduleLogReplicationTask() {
         return context.getScheduler().schedulerLogReplicationTask(this::replicateLog);
     }
-
 
     // leader 发送心跳信息
     void replicateLog() {
         context.getTaskExecutor().submit(this::doReplicateLog, LOGGING_FUTURE_CALLBACK);
     }
-
-
 
     private void doReplicateLog() {
         for (GroupMember member : context.getGroup().listReplicationTarget()) {
@@ -226,7 +208,11 @@ public class NodeImpl implements Node {
         context.getConnector().sendAppendEntries(rpc,member.getEndpoint());
     }
 
-    // 非leader节点收到心跳信息
+    /*******************************  非leader节点收到心跳信息  **********************************************/
+    /*
+    *  非leader节点收到 AppendEntriesRpc 心跳信息，处理后，回复 AppendEntriesResult 消息
+    *
+    * */
     @Subscribe
     public void onReceiveAppendEntriesRpc(AppendEntriesRpcMessage rpcMessage) {
         context.getTaskExecutor().submit(() ->
@@ -266,7 +252,12 @@ public class NodeImpl implements Node {
         return b;
     }
 
-    // leader 节点收到心跳回应
+
+    /*******************************  leader 节点收到心跳回应  **********************************************/
+    /*
+    *   leader 节点收到 AppendEntriesResult 消息，开始处理
+    * */
+    @Subscribe
     public void onReceiveAppendEntriesResult(AppendEntriesResultMessage resultMessage) {
         context.getTaskExecutor().submit(
                 () -> doProcessAppendEntriesResult(resultMessage)
@@ -299,5 +290,33 @@ public class NodeImpl implements Node {
         }
     }
 
+    /*******************************  其它  **********************************************/
+
+    private static final FutureCallback<Object> LOGGING_FUTURE_CALLBACK = new FutureCallback<Object>() {
+        @Override
+        public void onSuccess(@Nullable Object result) {
+        }
+
+        @Override
+        public void onFailure(@Nonnull Throwable t) {
+
+        }
+    };
+
+    @Override
+    public void registerStateMachine(StateMachine stateMachine) {
+        this.stateMachine = stateMachine;
+    }
+
+    @Override
+    public void appendLog(byte[] commandBytes) {
+
+    }
+
+    @Override
+    @Nonnull
+    public RoleNameAndLeaderId getRoleNameAndLeaderId() {
+        return role.getNameAndLeaderId(context.getSelfId());
+    }
 
 }

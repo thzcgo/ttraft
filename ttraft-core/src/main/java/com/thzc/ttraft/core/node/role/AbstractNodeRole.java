@@ -15,6 +15,12 @@ public abstract class AbstractNodeRole {
     // 取消超时定时任务
     public abstract void cancelTimeoutOrTask();
 
+    public RoleNameAndLeaderId getNameAndLeaderId(NodeId selfId) {
+        return new RoleNameAndLeaderId(name, getLeaderId(selfId));
+    }
+
+    public abstract NodeId getLeaderId(NodeId selfId);
+
     public RoleName getName() {
         return name;
     }
@@ -22,10 +28,4 @@ public abstract class AbstractNodeRole {
     public int getTerm() {
         return term;
     }
-
-    public RoleNameAndLeaderId getNameAndLeaderId(NodeId selfId) {
-        return new RoleNameAndLeaderId(name, getLeaderId(selfId));
-    }
-
-    public abstract NodeId getLeaderId(NodeId selfId);
 }

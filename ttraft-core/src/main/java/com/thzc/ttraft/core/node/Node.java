@@ -5,13 +5,13 @@ import com.thzc.ttraft.core.node.role.RoleNameAndLeaderId;
 
 public interface Node {
 
-    void registerStateMachine(StateMachine stateMachine);
-
     void start();
 
-    void appendLog(byte[] commandBytes);
-
     void stop() throws InterruptedException;
+
+    void registerStateMachine(StateMachine stateMachine);
+
+    void appendLog(byte[] commandBytes);
 
     RoleNameAndLeaderId getRoleNameAndLeaderId();
 }

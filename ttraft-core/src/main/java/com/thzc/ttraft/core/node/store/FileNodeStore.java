@@ -16,6 +16,7 @@ public class FileNodeStore implements NodeStore {
     private static final long OFFSET_TERM = 0;
     private static final long OFFSET_VOTED_FOR = 4;
     private SeekableFile seekableFile;
+
     private int term = 0;
     private NodeId votedFor = null;
 
@@ -32,8 +33,15 @@ public class FileNodeStore implements NodeStore {
         }
     }
 
+    /*
+    *  文件格式：
+    *  currentTerm : 4字节
+    *  voteFor 长度 : 4字节
+    *  voteFor 内容 : 变长
+    * */
     private void initalizeOrLoad() throws IOException {
         if (seekableFile.size() == 0) {
+            // 初始时8字节，4字节的currentTerm，4字节的voteFor长度(内容为空)
             seekableFile.truncate(8L);
             seekableFile.seek(0);
             seekableFile.writeInt(0);
