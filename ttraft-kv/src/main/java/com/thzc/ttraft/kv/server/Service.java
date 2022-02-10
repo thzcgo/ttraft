@@ -4,7 +4,7 @@ import com.thzc.ttraft.core.log.statemachine.AbstractSingleThreadStateMachine;
 import com.thzc.ttraft.core.node.Node;
 import com.thzc.ttraft.core.node.role.RoleName;
 import com.thzc.ttraft.core.node.role.RoleNameAndLeaderId;
-import com.thzc.ttraft.kv.command.*;
+import com.thzc.ttraft.kv.server.command.*;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -83,17 +83,28 @@ public class NodeImpl implements Node {
         if (role.getName() == RoleName.LEADER) return;
         int newTerm = role.getTerm() + 1;
         role.cancelTimeoutOrTask();
-        // follower -> candidate
-        changeToRole(new CandidateNodeRole(newTerm, scheduleElectionTimeout()));
 
-        EntryMeta lastEntryMeta = context.getLog().getLastEntryMeta();
-        // 发送 RequestVote
-        RequestVoteRpc rpc = new RequestVoteRpc();
-        rpc.setTerm(newTerm);
-        rpc.setCandidateId(context.getSelfId());
-        rpc.setLastLogIndex(lastEntryMeta.getIndex());
-        rpc.setLastLogTerm(lastEntryMeta.getTerm());
-        context.getConnector().sendRequestVote(rpc, context.getGroup().listEndpointExceptSelf());
+        // 判断是否为单机模式
+        if (context.getGroup().isStandalone()) {
+            resetReplicatingStates();
+            changeToRole(new LeaderNodeRole(newTerm, scheduleLogReplicationTask())); // 单机模式下只有一个leader节点
+            context.getLog().appendEntry(newTerm);
+        } else {
+            // follower -> candidate
+            changeToRole(new CandidateNodeRole(newTerm, scheduleElectionTimeout()));
+            EntryMeta lastEntryMeta = context.getLog().getLastEntryMeta();
+            // 发送 RequestVote
+            RequestVoteRpc rpc = new RequestVoteRpc();
+            rpc.setTerm(newTerm);
+            rpc.setCandidateId(context.getSelfId());
+            rpc.setLastLogIndex(lastEntryMeta.getIndex());
+            rpc.setLastLogTerm(lastEntryMeta.getTerm());
+            context.getConnector().sendRequestVote(rpc, context.getGroup().listEndpointExceptSelf());
+        }
+    }
+
+    private void resetReplicatingStates() {
+        context.getGroup().resetReplicatingStates(context.getLog().getNextIndex());
     }
 
     /******************************* 接收RequestVote消息   **********************************************/
@@ -188,10 +199,17 @@ public class NodeImpl implements Node {
     }
 
     private void doReplicateLog() {
+        // 单机模式下不需要日志复制，但是要推进commitIndex
+        if (context.getGroup().isStandalone()) {
+            context.getLog().advanceCommitIndex(context.getLog().getNextIndex() - 1, role.getTerm());
+            return;
+        }
         for (NodeGroupMember member : context.getGroup().listReplicationTarget()) {
             doReplicateLog(member);
         }
     }
+
+
 
     private void doReplicateLog(NodeGroupMember member) {
         AppendEntriesRpc rpc = new AppendEntriesRpc();

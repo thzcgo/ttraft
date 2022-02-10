@@ -1,8 +1,7 @@
-package com.thzc.ttraft.kv.command;
+package com.thzc.ttraft.kv.server.command;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.thzc.ttraft.core.proto.Protos;
 import com.thzc.ttraft.kv.proto.kvstore;
 
 import java.util.Arrays;

@@ -9,32 +9,6 @@ import java.util.Map;
 
 public class ConsoleLauncher {
 
-    private static class ServerConfig {
-
-        private final String nodeId;
-        private final String host;
-        private final int port;
-
-        ServerConfig(String nodeId, String host, int port) {
-            this.nodeId = nodeId;
-            this.host = host;
-            this.port = port;
-        }
-
-        String getNodeId() {
-            return nodeId;
-        }
-
-        String getHost() {
-            return host;
-        }
-
-        int getPort() {
-            return port;
-        }
-
-    }
-
     private void execute(String[] args) {
         Options options = new Options();
         options.addOption(Option.builder("gc")
@@ -46,7 +20,7 @@ public class ConsoleLauncher {
                 .build());
         if (args.length == 0) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("xraft-kvstore-client [OPTION]...", options);
+            formatter.printHelp("ttraft-kv-client [OPTION]...", options);
             return;
         }
 
@@ -64,29 +38,26 @@ public class ConsoleLauncher {
         console.start();
     }
 
+    /*** 将 A,localhost,8001 B,localhost,8011 格式化成 Map<NodeId, Address>  */
     private Map<NodeId, Address> parseGroupConfig(String[] rawGroupConfig) {
         Map<NodeId, Address> serverMap = new HashMap<>();
         for (String rawServerConfig : rawGroupConfig) {
-            ServerConfig serverConfig = parseServerConfig(rawServerConfig);
-            serverMap.put(new NodeId(serverConfig.getNodeId()), new Address(serverConfig.getHost(), serverConfig.getPort()));
+            String[] pieces = rawServerConfig.split(",");
+            if (pieces.length != 3) {
+                throw new IllegalArgumentException("illegal server config [" + rawServerConfig + "]");
+            }
+            String nodeId = pieces[0];
+            String host = pieces[1];
+            int port;
+            try {
+                port = Integer.parseInt(pieces[2]);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("illegal port [" + pieces[2] + "]");
+            }
+
+            serverMap.put(new NodeId(nodeId), new Address(host, port));
         }
         return serverMap;
-    }
-
-    private ServerConfig parseServerConfig(String rawServerConfig) {
-        String[] pieces = rawServerConfig.split(",");
-        if (pieces.length != 3) {
-            throw new IllegalArgumentException("illegal server config [" + rawServerConfig + "]");
-        }
-        String nodeId = pieces[0];
-        String host = pieces[1];
-        int port;
-        try {
-            port = Integer.parseInt(pieces[2]);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("illegal port [" + pieces[2] + "]");
-        }
-        return new ServerConfig(nodeId, host, port);
     }
 
 
@@ -94,5 +65,4 @@ public class ConsoleLauncher {
         ConsoleLauncher launcher = new ConsoleLauncher();
         launcher.execute(args);
     }
-
 }

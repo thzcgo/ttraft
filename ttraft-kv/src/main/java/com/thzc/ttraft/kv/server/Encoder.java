@@ -2,8 +2,8 @@ package com.thzc.ttraft.kv.server;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
-import com.thzc.ttraft.kv.command.*;
 import com.thzc.ttraft.kv.proto.kvstore;
+import com.thzc.ttraft.kv.server.command.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -29,7 +29,7 @@ public class Encoder extends MessageToByteEncoder<Object> {
             GetCommand getCommand = (GetCommand) msg;
             kvstore.GetCommand build = kvstore.GetCommand.newBuilder().setKey(getCommand.getKey()).build();
             this.writeMessage(MessageConstants.MSG_TYPE_GET_COMMAND, build, byteBuf);
-        } else if (msg instanceof  GetCommandResponse) {
+        } else if (msg instanceof GetCommandResponse) {
             GetCommandResponse getCommandResponse = (GetCommandResponse) msg;
             byte[] bytes = getCommandResponse.getValue();
             kvstore.GetCommandResponse build = kvstore.GetCommandResponse.newBuilder().setFound(getCommandResponse.isFound()).setValue(bytes != null ? ByteString.copyFrom(bytes) : ByteString.EMPTY).build();

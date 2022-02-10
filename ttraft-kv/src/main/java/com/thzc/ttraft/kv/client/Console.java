@@ -18,11 +18,13 @@ import java.util.Map;
 public class Console {
 
     private static final String PROMPT = "kvstore-client " + Client.VERSION + "> ";
-    private final Map<String, Command> commandMap;
-    private final CommandContext commandContext;
+    private final Map<String, Command> commandMap; // 持有所有命令
+    private final CommandContext commandContext; // 持有命令上下文（集群成员表、客户端）
     private final LineReader reader;
 
     public Console(Map<NodeId, Address> serverMap) {
+        commandContext = new CommandContext(serverMap);
+
         commandMap = buildCommandMap(Arrays.asList(
                 new ExitCommand(),
                 new ClientAddServerCommand(),
@@ -33,8 +35,6 @@ public class Console {
                 new KVStoreGetCommand(),
                 new KVStoreSetCommand()
         ));
-        commandContext = new CommandContext(serverMap);
-
         ArgumentCompleter completer = new ArgumentCompleter(
                 new StringsCompleter(commandMap.keySet()),
                 new NullCompleter()
@@ -56,6 +56,7 @@ public class Console {
         commandContext.setRunning(true);
         showInfo();
         String line;
+        // 在 commandContext.running = true 时，持续接收命令行操作，分发给相应命令执行
         while (commandContext.isRunning()) {
             try {
                 line = reader.readLine(PROMPT);
@@ -78,6 +79,9 @@ public class Console {
         System.out.println("***********************************************");
     }
 
+    /*
+    *  \s+ 表示匹配任何多个空白字符，包括空格、换行符、回车符、制表符、换页符等
+    * */
     private void dispatchCommand(String line) {
         String[] commandNameAndArguments = line.split("\\s+", 2);
         String commandName = commandNameAndArguments[0];

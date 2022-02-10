@@ -1,4 +1,4 @@
-package com.thzc.ttraft.kv.command;
+package com.thzc.ttraft.kv.server.command;
 
 public class Failure {
 

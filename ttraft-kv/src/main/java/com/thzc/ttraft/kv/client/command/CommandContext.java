@@ -10,15 +10,25 @@ import java.util.Map;
 
 public class CommandContext {
 
-    private final Map<NodeId, Address> serverMap;
-
+    private final Map<NodeId, Address> serverMap; // 服务器列表
     private Client client;
-
     private boolean running = false;
 
     public CommandContext(Map<NodeId, Address> serverMap) {
         this.serverMap = serverMap;
         this.client = new Client(buildServerRouter(serverMap));
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    Client getClient() {
+        return client;
     }
 
     private ServerRouter buildServerRouter(Map<NodeId, Address> serverMap) {
@@ -30,10 +40,7 @@ public class CommandContext {
         return router;
     }
 
-    Client getClient() {
-        return client;
-    }
-
+    /********  集群成员操作  *******************************************************/
     NodeId getClientLeader() {
         return client.getServerRouter().getLeaderId();
     }
@@ -54,14 +61,6 @@ public class CommandContext {
             return true;
         }
         return false;
-    }
-
-    public void setRunning(boolean running) {
-        this.running = running;
-    }
-
-    public boolean isRunning() {
-        return running;
     }
 
     public void printSeverList() {

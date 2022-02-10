@@ -85,6 +85,14 @@ public class NodeGroup {
         return findMember(selfId);
     }
 
+    public void resetReplicatingStates(int nextLogIndex) {
+        for (NodeGroupMember member : memberMap.values()) {
+            if (!member.idEquals(selfId)) {
+                member.setReplicatingState(new ReplicatingState(nextLogIndex));
+            }
+        }
+    }
+
 
     public static class NodeMatchIndex implements Comparable<NodeMatchIndex>{
 

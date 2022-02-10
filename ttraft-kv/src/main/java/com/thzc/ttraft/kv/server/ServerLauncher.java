@@ -72,7 +72,7 @@ public class ServerLauncher {
 
         if (args.length == 0) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("xraft-kvstore [OPTION]...", options);
+            formatter.printHelp("ttraft-kv [OPTION]...", options);
             return;
         }
 
@@ -98,24 +98,25 @@ public class ServerLauncher {
         }
     }
 
+    // 单机模式下启动
     private void startAsStandaloneOrStandby(CommandLine cmdLine, boolean standby) throws Exception {
         if (!cmdLine.hasOption("p1") || !cmdLine.hasOption("p2")) {
             throw new IllegalArgumentException("port-raft-node or port-service required");
         }
 
-        String id = cmdLine.getOptionValue('i');
+        String nodeId = cmdLine.getOptionValue('i');
         String host = cmdLine.getOptionValue('h', "localhost");
         int portRaftServer = ((Long) cmdLine.getParsedOptionValue("p1")).intValue();
         int portService = ((Long) cmdLine.getParsedOptionValue("p2")).intValue();
 
-        NodeEndpoint nodeEndpoint = new NodeEndpoint(id, host, portRaftServer);
+        NodeEndpoint nodeEndpoint = new NodeEndpoint(nodeId, host, portRaftServer);
         Node node = new NodeBuilder(nodeEndpoint)
                 .setStandby(standby)
                 .setDataDir(cmdLine.getOptionValue('d'))
                 .build();
         Server server = new Server(node, portService);
         logger.info("start with mode {}, id {}, host {}, port raft node {}, port service {}",
-                (standby ? "standby" : "standalone"), id, host, portRaftServer, portService);
+                (standby ? "standby" : "standalone"), nodeId, host, portRaftServer, portService);
         startServer(server);
     }
 

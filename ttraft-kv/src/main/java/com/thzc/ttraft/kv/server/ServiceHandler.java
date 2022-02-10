@@ -1,8 +1,7 @@
 package com.thzc.ttraft.kv.server;
 
-import com.thzc.ttraft.kv.command.GetCommand;
-import com.thzc.ttraft.kv.command.SetCommand;
-import com.thzc.ttraft.kv.proto.kvstore;
+import com.thzc.ttraft.kv.server.command.GetCommand;
+import com.thzc.ttraft.kv.server.command.SetCommand;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 

@@ -1,10 +1,10 @@
 package com.thzc.ttraft.kv.client;
 
 import com.thzc.ttraft.core.service.ServerRouter;
-import com.thzc.ttraft.kv.command.AddNodeCommand;
-import com.thzc.ttraft.kv.command.GetCommand;
-import com.thzc.ttraft.kv.command.RemoveNodeCommand;
-import com.thzc.ttraft.kv.command.SetCommand;
+import com.thzc.ttraft.kv.server.command.AddNodeCommand;
+import com.thzc.ttraft.kv.server.command.GetCommand;
+import com.thzc.ttraft.kv.server.command.RemoveNodeCommand;
+import com.thzc.ttraft.kv.server.command.SetCommand;
 
 public class Client {
 
