@@ -1,6 +1,7 @@
 package com.thzc.ttraft.core.log;
 
-import com.thzc.ttraft.core.log.AbstractLog;
+import com.thzc.ttraft.core.log.dir.LogGeneration;
+import com.thzc.ttraft.core.log.dir.RootDir;
 import com.thzc.ttraft.core.log.sequence.FileEntrySequence;
 
 import java.io.File;
@@ -18,8 +19,5 @@ public class FileLog extends AbstractLog {
             LogGeneration firstGeneration = rootDir.createFirstGeneration();
             entrySequence = new FileEntrySequence(firstGeneration, 1);
         }
-
     }
-
-
 }

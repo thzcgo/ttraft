@@ -1,6 +1,5 @@
 package com.thzc.ttraft.core.log.entry;
 
-import com.thzc.ttraft.core.log.entry.AbstractEntry;
 
 public class GeneralEntry extends AbstractEntry {
 

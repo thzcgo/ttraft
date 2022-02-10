@@ -1,22 +1,22 @@
-package com.thzc.ttraft.core.log;
+package com.thzc.ttraft.core.log.dir;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-class RootDir {
+public class RootDir {
 
     static final String FILE_NAME_SNAPSHOT = "service.ss";
     static final String FILE_NAME_ENTRIES = "entries.bin";
-    static final String FILE_NAME_ENTRY_OFFSET_INDEX = "entries.idx";
+    static final String FILE_NAME_ENTRY_INDEX = "entries.idx";
     private static final String DIR_NAME_GENERATING = "generating";
     private static final String DIR_NAME_INSTALLING = "installing";
 
     private static final Logger logger = LoggerFactory.getLogger(RootDir.class);
     private final File baseDir;
 
-    RootDir(File baseDir) {
+    public RootDir(File baseDir) {
         if (!baseDir.exists()) {
             throw new IllegalArgumentException("dir " + baseDir + " not exists");
         }
@@ -52,13 +52,13 @@ class RootDir {
         return destDir;
     }
 
-    LogGeneration createFirstGeneration() {
+    public LogGeneration createFirstGeneration() {
         LogGeneration generation = new LogGeneration(baseDir, 0);
         generation.initialize();
         return generation;
     }
 
-    LogGeneration getLatestGeneration() {
+    public LogGeneration getLatestGeneration() {
         File[] files = baseDir.listFiles();
         if (files == null) {
             return null;

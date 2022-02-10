@@ -17,9 +17,9 @@ import java.util.Objects;
 
 public class NodeImpl implements Node {
 
+    private AbstractNodeRole role; // 当前的角色
     private final NodeContext context;
     private boolean started; // 是否启动
-    private AbstractNodeRole role; // 当前的角色
     private StateMachine stateMachine;
 
     // callback for async tasks.
@@ -66,7 +66,7 @@ public class NodeImpl implements Node {
         changeToRole(new FollowerNodeRole(term, votedFor, leaderId, electionTimeout));
     }
 
-    /*********************************  选举超时  *********************************************************/
+    /************  选举超时，当前节点从follower 变成 candidate，向其他follower发送 RequestVote 消息  *************/
     /*
     *  选举超时，当前节点从follower 变成 candidate，向其他节点follower发送 RequestVote 消息
     *
@@ -188,12 +188,12 @@ public class NodeImpl implements Node {
     }
 
     private void doReplicateLog() {
-        for (GroupMember member : context.getGroup().listReplicationTarget()) {
+        for (NodeGroupMember member : context.getGroup().listReplicationTarget()) {
             doReplicateLog(member);
         }
     }
 
-    private void doReplicateLog(GroupMember member) {
+    private void doReplicateLog(NodeGroupMember member) {
         AppendEntriesRpc rpc = new AppendEntriesRpc();
         rpc.setTerm(role.getTerm());
         rpc.setLeaderId(context.getSelfId());
@@ -203,7 +203,7 @@ public class NodeImpl implements Node {
         context.getConnector().sendAppendEntries(rpc,member.getEndpoint());
     }
 
-    private void doReplicateLog(GroupMember member, int maxEntries) {
+    private void doReplicateLog(NodeGroupMember member, int maxEntries) {
         AppendEntriesRpc rpc = context.getLog().createAppendEntriesRpc(role.getTerm(), context.getSelfId(), member.getNextIndex(), maxEntries);
         context.getConnector().sendAppendEntries(rpc,member.getEndpoint());
     }
@@ -245,7 +245,7 @@ public class NodeImpl implements Node {
     }
 
     private boolean appendEntries(AppendEntriesRpc rpc) {
-        boolean b = context.getLog().appednEntriesFromLeader(rpc.getPrevLogIndex(), rpc.getPrevLogTerm(), rpc.getEntries());
+        boolean b = context.getLog().appendEntriesFromLeader(rpc.getPrevLogIndex(), rpc.getPrevLogTerm(), rpc.getEntries());
         if (b) {
             context.getLog().advanceCommitIndex(Math.min(rpc.getLeaderCommit(), rpc.getLastEntryIndex()), rpc.getTerm());
         }
@@ -276,7 +276,7 @@ public class NodeImpl implements Node {
         }
 
         NodeId sourceId = resultMessage.getSourceNodeId();
-        GroupMember member = context.getGroup().getMember(sourceId);
+        NodeGroupMember member = context.getGroup().getMember(sourceId);
         if (member == null) return;
         AppendEntriesRpc rpc = resultMessage.getAppendEntriesRpc();
         if (result.isSuccess()) {

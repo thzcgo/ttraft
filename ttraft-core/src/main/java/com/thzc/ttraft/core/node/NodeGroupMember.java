@@ -1,20 +1,17 @@
 package com.thzc.ttraft.core.node;
 
-import com.thzc.ttraft.core.node.NodeEndpoint;
-import com.thzc.ttraft.core.node.NodeId;
-import com.thzc.ttraft.core.node.ReplicatingState;
 
-public class GroupMember {
+public class NodeGroupMember {
 
     private final NodeEndpoint endpoint;
     private ReplicatingState replicatingState;
 
-    public GroupMember(NodeEndpoint endpoint, ReplicatingState replicatingState) {
+    public NodeGroupMember(NodeEndpoint endpoint, ReplicatingState replicatingState) {
         this.endpoint = endpoint;
         this.replicatingState = replicatingState;
     }
 
-    public GroupMember(NodeEndpoint endpoint) {
+    public NodeGroupMember(NodeEndpoint endpoint) {
         this(endpoint, null);
     }
 

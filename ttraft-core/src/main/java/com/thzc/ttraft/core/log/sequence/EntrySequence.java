@@ -7,18 +7,19 @@ import java.util.List;
 
 public interface EntrySequence {
 
-    boolean isEmpty();
-
+    /************  日志索引相关   ****************************/
     int getFirstLogIndex();
 
     int getLastLogIndex();
 
     int getNextLogIndex();
 
+    /************  子序列相关   ****************************/
     List<Entry> subList(int fromIndex);
 
     List<Entry> subList(int fromIndex, int toIndex);
 
+    /************  日志条目相关   ****************************/
     boolean isEntryPresent(int index);
 
     EntryMeta getEntryMeta(int index);
@@ -31,11 +32,15 @@ public interface EntrySequence {
 
     void append(List<Entry> entries);
 
+    void removeAfter(int index);
+
+    /************  commit相关   ****************************/
     void commit(int index);
 
     int getCommitIndex();
 
-    void removeAfter(int index);
+    /************  其它   ****************************/
+    boolean isEmpty();
 
     void close();
 }

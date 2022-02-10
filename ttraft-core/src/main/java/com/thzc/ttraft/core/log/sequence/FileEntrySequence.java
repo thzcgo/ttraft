@@ -1,9 +1,9 @@
 package com.thzc.ttraft.core.log.sequence;
 
-import com.thzc.ttraft.core.log.LogDir;
-import com.thzc.ttraft.core.log.LogException;
+import com.thzc.ttraft.core.log.dir.LogDir;
 import com.thzc.ttraft.core.log.entry.Entry;
 import com.thzc.ttraft.core.log.entry.EntryMeta;
+import com.thzc.ttraft.core.log.LogException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,24 +13,24 @@ import java.util.List;
 
 public class FileEntrySequence extends AbstractEntrySequence {
     
-    private final EntriesFile entriesFile;
-    private final EntryIndexFile entryIndexFile;
-    private final LinkedList<Entry> pendingEntries = new LinkedList<>();
-    
+    private final EntriesFile entriesFile; // 日志条目文件
+    private final EntryIndexFile entryIndexFile; // 日志条目索引文件
+    private final LinkedList<Entry> pendingEntries = new LinkedList<>(); // 待写入的日志条目缓冲
     private int commitIndex = 0;
-    
+
+    /************  构造相关  *************************************/
     public FileEntrySequence(LogDir logDir, int logIndexOffset) {
         super(logIndexOffset);
         try {
             this.entriesFile = new EntriesFile(logDir.getEntriesFile());
-            this.entryIndexFile = new EntryIndexFile(logDir.getEntryOffsetIndexFile());
+            this.entryIndexFile = new EntryIndexFile(logDir.getEntryIndexFile());
             initialize();
         } catch (IOException e) {
             throw new LogException("日志文件或日志索引文件异常");
         }
     }
 
-    public FileEntrySequence(EntriesFile entriesFile, EntryIndexFile entryIndexFile,int logIndexOffset) {
+    public FileEntrySequence(EntriesFile entriesFile, EntryIndexFile entryIndexFile, int logIndexOffset) {
         super(logIndexOffset);
         this.entriesFile = entriesFile;
         this.entryIndexFile = entryIndexFile;
@@ -43,34 +43,10 @@ public class FileEntrySequence extends AbstractEntrySequence {
         nextLogIndex = entryIndexFile.getMaxEntryIndex() + 1;
     }
 
+    /***********  日志项相关  *********************************************/
     @Override
-    public int getCommitIndex() {
-        return commitIndex;
-    }
-
-    @Override
-    protected List<Entry> doSubList(int fromIndex, int toIndex) {
-        List<Entry> result = new ArrayList<>();
-        // 从文件中获取
-        if (!entryIndexFile.isEmpty() && fromIndex <= entryIndexFile.getMaxEntryIndex()) {
-            int maxIndex = Math.min(entryIndexFile.getMaxEntryIndex() + 1, toIndex);
-            for (int i = fromIndex; i < maxIndex; i++) {
-                result.add(getEntryInFile(i));
-            }
-        }
-        // 从日志缓冲中获取日志
-        if (!pendingEntries.isEmpty() && toIndex > pendingEntries.getFirst().getIndex()) {
-            Iterator<Entry> iterator = pendingEntries.iterator();
-            Entry entry;
-            int index;
-            while (iterator.hasNext()) {
-                entry = iterator.next();
-                index = entry.getIndex();
-                if (index >= toIndex) break;;
-                if (index >= fromIndex) result.add(entry);
-            }
-        }
-        return result;
+    protected void doAppend(Entry entry) {
+        pendingEntries.add(entry);
     }
 
     private Entry getEntryInFile(int index) {
@@ -110,10 +86,6 @@ public class FileEntrySequence extends AbstractEntrySequence {
         return getEntryInFile(entryIndexFile.getMaxEntryIndex());
     }
 
-    @Override
-    protected void doAppend(Entry entry) {
-        pendingEntries.add(entry);
-    }
 
     @Override
     protected void doRemoveAfter(int index) {
@@ -142,6 +114,38 @@ public class FileEntrySequence extends AbstractEntrySequence {
         } catch (IOException e) {
             throw new LogException();
         }
+    }
+
+    /*************  子序列相关  *********************************/
+    @Override
+    protected List<Entry> doSubList(int fromIndex, int toIndex) {
+        List<Entry> result = new ArrayList<>();
+        // 从文件中获取
+        if (!entryIndexFile.isEmpty() && fromIndex <= entryIndexFile.getMaxEntryIndex()) {
+            int maxIndex = Math.min(entryIndexFile.getMaxEntryIndex() + 1, toIndex);
+            for (int i = fromIndex; i < maxIndex; i++) {
+                result.add(getEntryInFile(i));
+            }
+        }
+        // 从日志缓冲中获取日志
+        if (!pendingEntries.isEmpty() && toIndex > pendingEntries.getFirst().getIndex()) {
+            Iterator<Entry> iterator = pendingEntries.iterator();
+            Entry entry;
+            int index;
+            while (iterator.hasNext()) {
+                entry = iterator.next();
+                index = entry.getIndex();
+                if (index >= toIndex) break;;
+                if (index >= fromIndex) result.add(entry);
+            }
+        }
+        return result;
+    }
+
+    /*************  Commit 相关  *********************************/
+    @Override
+    public int getCommitIndex() {
+        return commitIndex;
     }
 
     public void commit(int index) {

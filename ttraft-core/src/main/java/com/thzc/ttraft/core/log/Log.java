@@ -13,24 +13,24 @@ public interface Log {
 
     int ALL_ENTRIES = -1;
 
-    /*
-    * 获取最后一条日志条目的term、index信息
-    * */
-    EntryMeta getLastEntryMeta();
-
-    AppendEntriesRpc createAppendEntriesRpc(int term, NodeId selfId, int nextIndex, int maxEntries);
-
+    /*******  追加日志项  **************************************************/
     NoOpEntry appendEntry(int term);
 
     GeneralEntry appendEntry(int term, byte[] command);
 
-    boolean appednEntriesFromLeader(int prevLogIndex, int prevLogTerm, List<Entry> entries);
+    boolean appendEntriesFromLeader(int prevLogIndex, int prevLogTerm, List<Entry> entries);
+
+    /*******  CommitIndex 相关  ******************************************/
+    int getCommitIndex();
 
     void advanceCommitIndex(int newCommitIndex, int currentTerm);
 
-    int getNextIndex();
+    /*******  其他  ******************************************/
+    EntryMeta getLastEntryMeta();
 
-    int getCommitIndex();
+    AppendEntriesRpc createAppendEntriesRpc(int term, NodeId selfId, int nextIndex, int maxEntries);
+
+    int getNextIndex();
 
     boolean isNewerThen(int lastLogIndex, int lastLogTerm);
 

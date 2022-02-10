@@ -1,7 +1,6 @@
 package com.thzc.ttraft.core.log.sequence;
 
 import com.thzc.ttraft.core.log.entry.Entry;
-import com.thzc.ttraft.core.log.sequence.AbstractEntrySequence;
 
 import java.util.ArrayList;
 import java.util.List;

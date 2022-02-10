@@ -4,16 +4,16 @@ import com.thzc.ttraft.core.log.entry.EntryMeta;
 
 public class EntryIndexItem {
 
-    private final int index;
-    private final long offset;
     private final int kind;
+    private final int index;
     private final int term;
+    private final long offset;
 
-    EntryIndexItem(int index, long offset, int kind, int term) {
-        this.index = index;
-        this.offset = offset;
+    public EntryIndexItem(int kind, int index, int term, long offset) {
         this.kind = kind;
+        this.index = index;
         this.term = term;
+        this.offset = offset;
     }
 
     int getIndex() {

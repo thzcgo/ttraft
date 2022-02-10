@@ -20,7 +20,6 @@ import java.util.Collection;
 
 public class NioConnector implements Connector {
 
-
     // Selector线程池、单线程
     private final NioEventLoopGroup bossNioEventLoopGroup = new NioEventLoopGroup(1);
     // IO线程池、固定多线程
@@ -30,7 +29,6 @@ public class NioConnector implements Connector {
     private final EventBus eventBus;
     // 节点间通信端口
     private final int port;
-
     // 入口Channel组
     private final InboundChannelGroup inboundChannelGroup = new InboundChannelGroup();
     // 出口Channel组
@@ -103,9 +101,6 @@ public class NioConnector implements Connector {
         }
     }
 
-
-
-
     private void logException(Exception e) {
         if (e instanceof ChannelConnectException) {
 //            logger.warn(e.getMessage());
@@ -137,9 +132,6 @@ public class NioConnector implements Connector {
             logException(e);
         }
     }
-
-
-
 
     public void replyAppendEntries(@Nonnull AppendEntriesResult result, @Nonnull AppendEntriesRpcMessage rpcMessage) {
         Preconditions.checkNotNull(result);

@@ -7,7 +7,7 @@ import com.thzc.ttraft.core.node.NodeId;
 * */
 public class RequestVoteRpc {
     private int term;
-    private NodeId candidateId; // 一般为
+    private NodeId candidateId;
     private int lastLogIndex = 0;
     private int lastLogTerm = 0;
 

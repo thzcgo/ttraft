@@ -17,8 +17,6 @@ public interface Connector {
     // 关闭连接器
     void close();
 
-
-
     void sendRequestVote(@Nonnull RequestVoteRpc rpc, @Nonnull Collection<NodeEndpoint> destinationEndpoints);
 
     void replyRequestVote(@Nonnull RequestVoteResult result, @Nonnull RequestVoteRpcMessage rpcMessage);

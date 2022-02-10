@@ -7,8 +7,9 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractEntrySequence implements EntrySequence {
-    int logIndexOffset;
-    int nextLogIndex;
+    // logIndexOffset == nextLogIndex 日志序列为空
+    int logIndexOffset; // 可以理解为第一条日志的索引 = firstLogIndex
+    int nextLogIndex; // 下一条日志的索引 = lastLogIndex
 
     public AbstractEntrySequence(int logIndexOffset) {
         this.logIndexOffset = logIndexOffset;
@@ -16,11 +17,6 @@ public abstract class AbstractEntrySequence implements EntrySequence {
     }
 
     /*******  索引相关  ******************************************************/
-    @Override
-    public boolean isEmpty() {
-        return logIndexOffset == nextLogIndex;
-    }
-
     @Override
     public int getFirstLogIndex() {
         if (isEmpty()) throw new EmptySequenceException();
@@ -123,6 +119,11 @@ public abstract class AbstractEntrySequence implements EntrySequence {
         return 0;
     }
 
+
+    @Override
+    public boolean isEmpty() {
+        return logIndexOffset == nextLogIndex;
+    }
 
     @Override
     public void close() {

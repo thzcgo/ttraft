@@ -1,4 +1,5 @@
-package com.thzc.ttraft.core.log;
+package com.thzc.ttraft.core.log.dir;
+
 
 import java.io.File;
 

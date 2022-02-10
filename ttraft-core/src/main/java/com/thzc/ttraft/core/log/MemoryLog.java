@@ -1,6 +1,5 @@
 package com.thzc.ttraft.core.log;
 
-import com.thzc.ttraft.core.log.AbstractLog;
 import com.thzc.ttraft.core.log.sequence.EntrySequence;
 
 public class MemoryLog extends AbstractLog {

@@ -26,16 +26,16 @@ public class EntrySequenceView implements Iterable<Entry> {
         return entries.get(index);
     }
 
-    public boolean isEmpty() {
-        return entries.isEmpty();
-    }
-
     int getFirstLogIndex() {
-       return firstLogIndex;
+        return firstLogIndex;
     }
 
     int getLastLogIndex() {
         return lastLogIndex;
+    }
+
+    public boolean isEmpty() {
+        return entries.isEmpty();
     }
 
     public EntrySequenceView subView(int fromIndex) {

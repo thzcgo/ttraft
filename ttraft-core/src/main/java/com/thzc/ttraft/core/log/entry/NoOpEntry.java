@@ -1,7 +1,5 @@
 package com.thzc.ttraft.core.log.entry;
 
-import com.thzc.ttraft.core.log.entry.AbstractEntry;
-
 public class NoOpEntry extends AbstractEntry {
 
     public NoOpEntry(int term, int index) {

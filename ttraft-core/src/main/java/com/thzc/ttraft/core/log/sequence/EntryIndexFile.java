@@ -44,17 +44,18 @@ public class EntryIndexFile implements Iterable<EntryIndexItem>{
         long offset;
         int kind;
         int term;
-        for (int i = minEntryIndex; i <= maxEntryIndex; i++) {
+        for (int index = minEntryIndex; index <= maxEntryIndex; index++) {
             offset = seekableFile.readLong();
             kind = seekableFile.readInt();
             term = seekableFile.readInt();
-            entryIndexItemMap.put(i, new EntryIndexItem(i, offset, kind, term));
+            entryIndexItemMap.put(index, new EntryIndexItem(kind, index , term, offset));
         }
     }
 
     private void updateEntryIndexCount() {
         entryIndexCount = maxEntryIndex - minEntryIndex + 1;
     }
+
     // 追加日志条目原信息
     public void appendEntryIndex(int index, long offset, int kind, int term) throws IOException {
         if (seekableFile.size() == 0L) {
@@ -108,6 +109,25 @@ public class EntryIndexFile implements Iterable<EntryIndexItem>{
         entryIndexCount = newMaxEntryIndex - minEntryIndex + 1;
     }
 
+    public EntryIndexItem get(int entryIndex) {
+        if (entryIndex < minEntryIndex || entryIndex > maxEntryIndex) {
+            throw new IllegalArgumentException("index < min or index > max");
+        }
+        return entryIndexItemMap.get(entryIndex);
+    }
+
+    public int getMinEntryIndex() {
+        return minEntryIndex;
+    }
+
+    public int getMaxEntryIndex() {
+        return maxEntryIndex;
+    }
+
+    public long getOffset(int entryIndex) {
+        return get(entryIndex).getOffset();
+    }
+
     /*******  迭代器  *******************************************/
     public Iterator<EntryIndexItem> iterator() {
         if (isEmpty()) {
@@ -116,9 +136,9 @@ public class EntryIndexFile implements Iterable<EntryIndexItem>{
         return new EntryIndexIterator(entryIndexCount, minEntryIndex);
     }
 
-
     private class EntryIndexIterator implements Iterator<EntryIndexItem> {
         private final int entryIndexCount;
+
         private int currentEntryIndex;
 
         public EntryIndexIterator(int entryIndexCount, int minEntryIndex) {
@@ -137,7 +157,6 @@ public class EntryIndexFile implements Iterable<EntryIndexItem>{
             checkModification();
             return entryIndexItemMap.get(currentEntryIndex++);
         }
-
         private void checkModification() {
             if (this.entryIndexCount != EntryIndexFile.this.entryIndexCount) {
                 throw new IllegalStateException("日志条目数已改变");
@@ -145,22 +164,4 @@ public class EntryIndexFile implements Iterable<EntryIndexItem>{
         }
     }
 
-    public int getMinEntryIndex() {
-        return minEntryIndex;
-    }
-
-    public int getMaxEntryIndex() {
-        return maxEntryIndex;
-    }
-
-    public long getOffset(int entryIndex) {
-        return get(entryIndex).getOffset();
-    }
-
-    public EntryIndexItem get(int entryIndex) {
-        if (entryIndex < minEntryIndex || entryIndex > maxEntryIndex) {
-            throw new IllegalArgumentException("index < min or index > max");
-        }
-        return entryIndexItemMap.get(entryIndex);
-    }
 }

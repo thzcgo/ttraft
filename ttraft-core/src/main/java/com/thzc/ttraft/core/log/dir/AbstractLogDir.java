@@ -1,8 +1,7 @@
-package com.thzc.ttraft.core.log;
+package com.thzc.ttraft.core.log.dir;
 
 
 import com.google.common.io.Files;
-import com.thzc.ttraft.core.log.LogDir;
 import com.thzc.ttraft.core.log.LogException;
 
 import java.io.File;
@@ -23,7 +22,7 @@ abstract class AbstractLogDir implements LogDir {
         }
         try {
             Files.touch(getEntriesFile());
-            Files.touch(getEntryOffsetIndexFile());
+            Files.touch(getEntryIndexFile());
         } catch (IOException e) {
             throw new LogException("failed to create file", e);
         }
@@ -34,10 +33,15 @@ abstract class AbstractLogDir implements LogDir {
         return dir.exists();
     }
 
-//    @Override
-//    public File getSnapshotFile() {
-//        return new File(dir, RootDir.FILE_NAME_SNAPSHOT);
-//    }
+    @Override
+    public File getDir() {
+        return dir;
+    }
+
+    @Override
+    public boolean renameTo(LogDir logDir) {
+        return dir.renameTo(logDir.getDir());
+    }
 
     @Override
     public File getEntriesFile() {
@@ -45,18 +49,8 @@ abstract class AbstractLogDir implements LogDir {
     }
 
     @Override
-    public File getEntryOffsetIndexFile() {
-        return new File(dir, RootDir.FILE_NAME_ENTRY_OFFSET_INDEX);
-    }
-
-    @Override
-    public File get() {
-        return dir;
-    }
-
-    @Override
-    public boolean renameTo(LogDir logDir) {
-        return dir.renameTo(logDir.get());
+    public File getEntryIndexFile() {
+        return new File(dir, RootDir.FILE_NAME_ENTRY_INDEX);
     }
 
 }

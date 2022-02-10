@@ -21,7 +21,7 @@ public class EntriesFile {
         this(new RandomAccessFileAdapter(file));
     }
 
-    //追加日志条目
+    //在日志尾部追加日志条目 格式: kind index term length commandbytes
     public long appendEntry(Entry entry) throws IOException {
         long offest = seekableFile.size();
         seekableFile.seek(offest);
@@ -48,19 +48,19 @@ public class EntriesFile {
     }
 
     // 获得大小
-    public long size() throws IOException {
-        return seekableFile.size();
-    }
-
-    // 清空内容
-    public void clear() throws IOException {
-        truncate(0L);
-    }
-
-    // 裁剪到指定大小，偏移由调用者提供
     public void truncate(long offset) throws IOException {
         seekableFile.truncate(offset);
     }
+
+    public long size() throws IOException {
+        return seekableFile.size();
+    }
+    // 清空内容
+
+    public void clear() throws IOException {
+        truncate(0L);
+    }
+    // 裁剪到指定大小，偏移由调用者提供
 
     // 关闭文件
     public void close() throws IOException {
