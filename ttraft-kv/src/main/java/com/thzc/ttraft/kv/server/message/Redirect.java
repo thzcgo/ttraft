@@ -1,4 +1,4 @@
-package com.thzc.ttraft.kv.server.command;
+package com.thzc.ttraft.kv.server.message;
 
 import com.thzc.ttraft.core.node.NodeId;
 

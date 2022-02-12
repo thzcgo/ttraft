@@ -108,12 +108,13 @@ public class ServerLauncher {
         String host = cmdLine.getOptionValue('h', "localhost");
         int portRaftServer = ((Long) cmdLine.getParsedOptionValue("p1")).intValue();
         int portService = ((Long) cmdLine.getParsedOptionValue("p2")).intValue();
-
+        // 创建raft节点
         NodeEndpoint nodeEndpoint = new NodeEndpoint(nodeId, host, portRaftServer);
         Node node = new NodeBuilder(nodeEndpoint)
                 .setStandby(standby)
                 .setDataDir(cmdLine.getOptionValue('d'))
                 .build();
+        // 创建kv服务器
         Server server = new Server(node, portService);
         logger.info("start with mode {}, id {}, host {}, port raft node {}, port service {}",
                 (standby ? "standby" : "standalone"), nodeId, host, portRaftServer, portService);

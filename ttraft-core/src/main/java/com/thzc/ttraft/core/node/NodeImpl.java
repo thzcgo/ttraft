@@ -1,5 +1,6 @@
 package com.thzc.ttraft.core.node;
 
+import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.FutureCallback;
 import com.thzc.ttraft.core.log.entry.EntryMeta;
@@ -209,8 +210,6 @@ public class NodeImpl implements Node {
         }
     }
 
-
-
     private void doReplicateLog(NodeGroupMember member) {
         AppendEntriesRpc rpc = new AppendEntriesRpc();
         rpc.setTerm(role.getTerm());
@@ -308,6 +307,27 @@ public class NodeImpl implements Node {
         }
     }
 
+    /*******  追加日志  ***********************************************************/
+    @Override
+    public void appendLog(@Nonnull byte[] commandBytes) {
+        Preconditions.checkNotNull(commandBytes);
+        ensureLeader();
+        context.getTaskExecutor().submit(() -> {
+            context.getLog().appendEntry(role.getTerm(), commandBytes);
+            doReplicateLog();
+        }, LOGGING_FUTURE_CALLBACK);
+    }
+
+    private void ensureLeader() {
+        RoleNameAndLeaderId result = role.getNameAndLeaderId(context.getSelfId());
+        if (result.getRoleName() == RoleName.LEADER) {
+            return;
+        }
+        NodeEndpoint endpoint = result.getLeaderId() != null ? context.getGroup().findMember(result.getLeaderId()).getEndpoint() : null;
+        throw new NotLeaderException(result.getRoleName(), endpoint);
+    }
+
+
     /*******************************  其它  **********************************************/
 
     private static final FutureCallback<Object> LOGGING_FUTURE_CALLBACK = new FutureCallback<Object>() {
@@ -322,14 +342,12 @@ public class NodeImpl implements Node {
     };
 
     @Override
-    public void registerStateMachine(StateMachine stateMachine) {
-        this.stateMachine = stateMachine;
+    public synchronized void registerStateMachine(@Nonnull StateMachine stateMachine) {
+        Preconditions.checkNotNull(stateMachine);
+        context.getLog().setStateMachine(stateMachine);
     }
 
-    @Override
-    public void appendLog(byte[] commandBytes) {
 
-    }
 
     @Override
     @Nonnull

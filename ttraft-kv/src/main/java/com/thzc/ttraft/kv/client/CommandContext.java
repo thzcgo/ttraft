@@ -1,16 +1,14 @@
-package com.thzc.ttraft.kv.client.command;
+package com.thzc.ttraft.kv.client;
 
 import com.thzc.ttraft.core.node.NodeId;
 import com.thzc.ttraft.core.rpc.Address;
 import com.thzc.ttraft.core.service.ServerRouter;
-import com.thzc.ttraft.kv.client.Client;
-import com.thzc.ttraft.kv.client.SocketChannel;
 
 import java.util.Map;
 
 public class CommandContext {
 
-    private final Map<NodeId, Address> serverMap; // 服务器列表
+    private final Map<NodeId, Address> serverMap; // 集群成员表
     private Client client;
     private boolean running = false;
 
@@ -27,7 +25,7 @@ public class CommandContext {
         return running;
     }
 
-    Client getClient() {
+    public Client getClient() {
         return client;
     }
 
@@ -41,20 +39,20 @@ public class CommandContext {
     }
 
     /********  集群成员操作  *******************************************************/
-    NodeId getClientLeader() {
-        return client.getServerRouter().getLeaderId();
-    }
-
-    void setClientLeader(NodeId nodeId) {
-        client.getServerRouter().setLeaderId(nodeId);
-    }
-
-    void clientAddServer(String nodeId, String host, int portService) {
+    public void clientAddServer(String nodeId, String host, int portService) {
         serverMap.put(new NodeId(nodeId), new Address(host, portService));
         client = new Client(buildServerRouter(serverMap));
     }
 
-    boolean clientRemoveServer(String nodeId) {
+    public NodeId getClientLeader() {
+        return client.getServerRouter().getLeaderId();
+    }
+
+    public void setClientLeader(NodeId nodeId) {
+        client.getServerRouter().setLeaderId(nodeId);
+    }
+
+    public boolean clientRemoveServer(String nodeId) {
         Address address = serverMap.remove(new NodeId(nodeId));
         if (address != null) {
             client = new Client(buildServerRouter(serverMap));

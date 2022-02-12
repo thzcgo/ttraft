@@ -1,7 +1,7 @@
 package com.thzc.ttraft.kv.server;
 
-import com.thzc.ttraft.kv.server.command.GetCommand;
-import com.thzc.ttraft.kv.server.command.SetCommand;
+import com.thzc.ttraft.kv.server.message.GetCommand;
+import com.thzc.ttraft.kv.server.message.SetCommand;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -19,5 +19,11 @@ public class ServiceHandler extends ChannelInboundHandlerAdapter {
         } else if (msg instanceof SetCommand) {
             service.set(new CommandRequest<>((SetCommand)msg, ctx.channel()));
         }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        ctx.close();
     }
 }

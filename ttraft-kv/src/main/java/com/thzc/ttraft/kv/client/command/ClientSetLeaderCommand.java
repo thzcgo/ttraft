@@ -2,6 +2,7 @@ package com.thzc.ttraft.kv.client.command;
 
 
 import com.thzc.ttraft.core.node.NodeId;
+import com.thzc.ttraft.kv.client.CommandContext;
 
 public class ClientSetLeaderCommand implements Command {
 

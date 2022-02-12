@@ -1,7 +1,7 @@
 package com.thzc.ttraft.kv.server;
 
-import com.thzc.ttraft.kv.proto.kvstore;
-import com.thzc.ttraft.kv.server.command.*;
+import com.thzc.ttraft.kv.server.message.proto.KVstore;
+import com.thzc.ttraft.kv.server.message.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -25,26 +25,26 @@ public class Decoder extends ByteToMessageDecoder {
         in.readBytes(payload);
         switch (messageType) {
             case MessageConstants.MSG_TYPE_SET_COMMAND:
-                kvstore.SetCommand setCommand = kvstore.SetCommand.parseFrom(payload);
+                KVstore.SetCommand setCommand = KVstore.SetCommand.parseFrom(payload);
                 out.add(new SetCommand(setCommand.getKey(), setCommand.getValue().toByteArray()));
                 break;
             case MessageConstants.MSG_TYPE_SUCCESS:
                 out.add(Success.INSTANCE);
                 break;
             case MessageConstants.MSG_TYPE_FAILURE:
-                kvstore.Failure failure = kvstore.Failure.parseFrom(payload);
+                KVstore.Failure failure = KVstore.Failure.parseFrom(payload);
                 out.add(new Failure(failure.getErrorCode(), failure.getMessage()));
                 break;
             case MessageConstants.MSG_TYPE_REDIRECT:
-                kvstore.Redirect redirect = kvstore.Redirect.parseFrom(payload);
+                KVstore.Redirect redirect = KVstore.Redirect.parseFrom(payload);
                 out.add(new Redirect(redirect.getLeaderId()));
                 break;
             case MessageConstants.MSG_TYPE_GET_COMMAND:
-                kvstore.GetCommand getCommand = kvstore.GetCommand.parseFrom(payload);
+                KVstore.GetCommand getCommand = KVstore.GetCommand.parseFrom(payload);
                 out.add(new GetCommand(getCommand.getKey()));
                 break;
             case MessageConstants.MSG_TYPE_GET_COMMAND_RESPONSE:
-                kvstore.GetCommandResponse getCommandResponse = kvstore.GetCommandResponse.parseFrom(payload);
+                KVstore.GetCommandResponse getCommandResponse = KVstore.GetCommandResponse.parseFrom(payload);
                 out.add(new GetCommandResponse(getCommandResponse.getFound(), getCommandResponse.getValue().toByteArray()));
                 break;
             default:

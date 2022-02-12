@@ -18,10 +18,10 @@ public abstract class AbstractSingleThreadStateMachine implements StateMachine{
     }
 
     @Override
-    public void applyLog(StateMachineContext context, int index, byte[] commandBytes, int firstLogIndex) {
-        taskExecutor.submit(() -> doApplyLog(context, index, commandBytes, firstLogIndex));
+    public void applyLog(int index, byte[] commandBytes) {
+        taskExecutor.submit(() -> doApplyLog(index, commandBytes));
     }
-    private void doApplyLog(StateMachineContext context, int index, byte[] commandBytes, int firstLogIndex) {
+    private void doApplyLog(int index, byte[] commandBytes) {
         if (index <= lastApplied) return;
         applyCommand(commandBytes);
         lastApplied = index;

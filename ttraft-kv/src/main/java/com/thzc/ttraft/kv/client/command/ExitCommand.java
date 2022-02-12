@@ -1,5 +1,7 @@
 package com.thzc.ttraft.kv.client.command;
 
+import com.thzc.ttraft.kv.client.CommandContext;
+
 public class ExitCommand implements Command {
 
     @Override

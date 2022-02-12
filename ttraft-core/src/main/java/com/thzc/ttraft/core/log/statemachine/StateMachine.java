@@ -4,7 +4,7 @@ public interface StateMachine {
 
     int getLastApplied();
 
-    void applyLog(StateMachineContext context, int index, byte[] commandBytes, int firstLogIndex);
+    void applyLog(int index, byte[] commandBytes);
 
     void shutdown();
 }

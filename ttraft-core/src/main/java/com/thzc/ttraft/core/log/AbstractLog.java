@@ -6,6 +6,9 @@ import com.thzc.ttraft.core.log.entry.GeneralEntry;
 import com.thzc.ttraft.core.log.entry.NoOpEntry;
 import com.thzc.ttraft.core.log.sequence.EntrySequence;
 import com.thzc.ttraft.core.log.sequence.EntrySequenceView;
+import com.thzc.ttraft.core.log.statemachine.EmptyStateMachine;
+import com.thzc.ttraft.core.log.statemachine.StateMachine;
+import com.thzc.ttraft.core.log.statemachine.StateMachineContext;
 import com.thzc.ttraft.core.node.NodeId;
 import com.thzc.ttraft.core.rpc.message.AppendEntriesRpc;
 
@@ -16,6 +19,7 @@ public class AbstractLog implements Log {
 
     protected EntrySequence entrySequence;
     protected int commitIndex = 0;
+    protected StateMachine stateMachine = new EmptyStateMachine();
 
     /*******  追加日志项  **************************************************/
     @Override
@@ -27,7 +31,7 @@ public class AbstractLog implements Log {
 
     @Override
     public GeneralEntry appendEntry(int term, byte[] command) {
-        GeneralEntry generalEntry = new GeneralEntry(entrySequence.getNextLogIndex(), term, command);
+        GeneralEntry generalEntry = new GeneralEntry(term, entrySequence.getNextLogIndex(), command);
         entrySequence.append(generalEntry);
         return generalEntry;
     }
@@ -89,10 +93,33 @@ public class AbstractLog implements Log {
         return 0;
     }
 
+
     @Override
     public void advanceCommitIndex(int newCommitIndex, int currentTerm) {
         if (!validateNewCommitIndex(newCommitIndex, currentTerm)) return;
         entrySequence.commit(newCommitIndex);
+        commitIndex = newCommitIndex;
+
+        advanceApplyIndex();
+    }
+
+    private void advanceApplyIndex() {
+        // start up and snapshot exists
+        int lastApplied = stateMachine.getLastApplied();
+        for (Entry entry : entrySequence.subList(lastApplied + 1, commitIndex + 1)) {
+            applyEntry(entry);
+        }
+    }
+
+    private void applyEntry(Entry entry) {
+        // skip no-op entry and membership-change entry
+        if (isApplicable(entry)) {
+            stateMachine.applyLog(entry.getIndex(), entry.getCommandBytes());
+        }
+    }
+
+    private boolean isApplicable(Entry entry) {
+        return entry.getKind() == Entry.KIND_GENERAL;
     }
 
     private boolean validateNewCommitIndex(int newCommitIndex, int currentTerm) {
@@ -134,7 +161,7 @@ public class AbstractLog implements Log {
 
     @Override
     public int getNextIndex() {
-        return 0;
+        return entrySequence.getNextLogIndex();
     }
 
     @Override
@@ -145,6 +172,12 @@ public class AbstractLog implements Log {
 
     @Override
     public void close() {
+        entrySequence.close();
+        stateMachine.shutdown();
+    }
 
+    @Override
+    public void setStateMachine(StateMachine stateMachine) {
+        this.stateMachine = stateMachine;
     }
 }

@@ -1,10 +1,10 @@
 package com.thzc.ttraft.kv.client;
 
 import com.thzc.ttraft.core.service.ServerRouter;
-import com.thzc.ttraft.kv.server.command.AddNodeCommand;
-import com.thzc.ttraft.kv.server.command.GetCommand;
-import com.thzc.ttraft.kv.server.command.RemoveNodeCommand;
-import com.thzc.ttraft.kv.server.command.SetCommand;
+import com.thzc.ttraft.kv.server.message.AddNodeCommand;
+import com.thzc.ttraft.kv.server.message.GetCommand;
+import com.thzc.ttraft.kv.server.message.RemoveNodeCommand;
+import com.thzc.ttraft.kv.server.message.SetCommand;
 
 public class Client {
 
@@ -14,6 +14,10 @@ public class Client {
 
     public Client(ServerRouter serverRouter) {
         this.serverRouter = serverRouter;
+    }
+
+    public ServerRouter getServerRouter() {
+        return serverRouter;
     }
 
     public void addNote(String nodeId, String host, int port) {
@@ -30,9 +34,5 @@ public class Client {
 
     public byte[] get(String key) {
         return (byte[]) serverRouter.send(new GetCommand(key));
-    }
-
-    public ServerRouter getServerRouter() {
-        return serverRouter;
     }
 }
