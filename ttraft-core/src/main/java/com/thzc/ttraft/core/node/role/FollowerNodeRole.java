@@ -3,28 +3,19 @@ package com.thzc.ttraft.core.node.role;
 import com.thzc.ttraft.core.node.NodeId;
 import com.thzc.ttraft.core.schedule.ElectionTimeout;
 
+import java.util.Objects;
+
 public class FollowerNodeRole extends AbstractNodeRole{
 
-    private final NodeId votedFor; // 投过票的节点，可能为空
-    private final NodeId leaderId; // 当前leader节点Id，可能为空
-    private final ElectionTimeout electionTimeout; // 选举超时
-
+    private final NodeId votedFor;
+    private final NodeId leaderId;
+    private final ElectionTimeout electionTimeout;
 
     public FollowerNodeRole(int term, NodeId votedFor, NodeId leaderId, ElectionTimeout electionTimeout) {
         super(RoleName.FOLLOWER, term);
         this.votedFor = votedFor;
         this.leaderId = leaderId;
         this.electionTimeout = electionTimeout;
-    }
-
-    @Override
-    public void cancelTimeoutOrTask() {
-        electionTimeout.cancel();
-    }
-
-    @Override
-    public NodeId getLeaderId(NodeId selfId) {
-        return leaderId;
     }
 
     public NodeId getVotedFor() {
@@ -36,11 +27,35 @@ public class FollowerNodeRole extends AbstractNodeRole{
     }
 
     @Override
+    public NodeId getLeaderId(NodeId selfId) {
+        return leaderId;
+    }
+
+    @Override
+    public void cancelTimeoutOrTask() {
+        electionTimeout.cancel();
+    }
+
+    @Override
+    public RoleState getState() {
+        DefaultRoleState state = new DefaultRoleState(RoleName.FOLLOWER, term);
+        state.setVotedFor(votedFor);
+        state.setLeaderId(leaderId);
+        return state;
+    }
+
+    @Override
+    protected boolean doStateEquals(AbstractNodeRole role) {
+        FollowerNodeRole that = (FollowerNodeRole) role;
+        return Objects.equals(this.votedFor, that.votedFor) && Objects.equals(this.leaderId, that.leaderId);
+    }
+
+    @Override
     public String toString() {
         return "FollowerNodeRole{" +
                 "term=" + term +
-                ", votedFor=" + votedFor +
                 ", leaderId=" + leaderId +
+                ", votedFor=" + votedFor +
                 ", electionTimeout=" + electionTimeout +
                 '}';
     }

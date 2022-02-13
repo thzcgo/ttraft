@@ -20,6 +20,7 @@ public class FromRemoteHandler extends AbstractHandler{
         if (msg instanceof NodeId) {
             remoteId = (NodeId) msg;
             NioChannel nioChannel = new NioChannel(ctx.channel());
+            channel = nioChannel;
             channelGroup.add(remoteId, nioChannel);
             return;
         }

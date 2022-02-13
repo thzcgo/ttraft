@@ -15,7 +15,7 @@ public interface EntrySequence {
     int getNextLogIndex();
 
     /************  子序列相关   ****************************/
-    List<Entry> subList(int fromIndex);
+    List<Entry> subView(int fromIndex);
 
     List<Entry> subList(int fromIndex, int toIndex);
 

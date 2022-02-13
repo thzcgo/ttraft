@@ -13,20 +13,27 @@ public class LeaderNodeRole extends AbstractNodeRole{
     }
 
     @Override
-    public void cancelTimeoutOrTask() {
-        logReplicationTask.cancel();
-    }
-
-    @Override
     public NodeId getLeaderId(NodeId selfId) {
         return selfId;
     }
 
     @Override
+    public void cancelTimeoutOrTask() {
+        logReplicationTask.cancel();
+    }
+
+    @Override
+    public RoleState getState() {
+        return new DefaultRoleState(RoleName.LEADER, term);
+    }
+
+    @Override
+    protected boolean doStateEquals(AbstractNodeRole role) {
+        return true;
+    }
+
+    @Override
     public String toString() {
-        return "LeaderNodeRole{" +
-                "term=" + term +
-                ", logReplicationTask=" + logReplicationTask +
-                '}';
+        return "LeaderNodeRole{term=" + term + ", logReplicationTask=" + logReplicationTask + '}';
     }
 }

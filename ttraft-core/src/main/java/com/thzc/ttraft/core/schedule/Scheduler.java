@@ -2,9 +2,9 @@ package com.thzc.ttraft.core.schedule;
 
 public interface Scheduler {
 
-    LogReplicationTask schedulerLogReplicationTask(Runnable task);
+    LogReplicationTask scheduleLogReplicationTask(Runnable task);
 
-    ElectionTimeout schedulerElectionTimeout(Runnable task);
+    ElectionTimeout scheduleElectionTimeout(Runnable task);
 
     void stop() throws InterruptedException;
 }

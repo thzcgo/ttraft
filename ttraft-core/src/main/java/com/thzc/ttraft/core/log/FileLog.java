@@ -1,5 +1,6 @@
 package com.thzc.ttraft.core.log;
 
+import com.google.common.eventbus.EventBus;
 import com.thzc.ttraft.core.log.dir.LogGeneration;
 import com.thzc.ttraft.core.log.dir.RootDir;
 import com.thzc.ttraft.core.log.sequence.FileEntrySequence;
@@ -12,6 +13,7 @@ public class FileLog extends AbstractLog {
 
     public FileLog(File baseDir) {
         rootDir = new RootDir(baseDir);
+
         LogGeneration latestGeneration = rootDir.getLatestGeneration();
         if (latestGeneration != null) {
             entrySequence = new FileEntrySequence(latestGeneration, latestGeneration.getLastIncludedIndex());

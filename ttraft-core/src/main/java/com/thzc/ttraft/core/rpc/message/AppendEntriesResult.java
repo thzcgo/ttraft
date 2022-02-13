@@ -2,12 +2,18 @@ package com.thzc.ttraft.core.rpc.message;
 
 public class AppendEntriesResult {
 
+    private final String rpcMessageId;
     private final int term;
     private final boolean success; // 是否追加成功
 
-    public AppendEntriesResult(int term, boolean success) {
+    public AppendEntriesResult(String rpcMessageId, int term, boolean success) {
+        this.rpcMessageId = rpcMessageId;
         this.term = term;
         this.success = success;
+    }
+
+    public String getRpcMessageId() {
+        return rpcMessageId;
     }
 
     public int getTerm() {
@@ -21,8 +27,9 @@ public class AppendEntriesResult {
     @Override
     public String toString() {
         return "AppendEntriesResult{" +
-                "term=" + term +
+                "rpcMessageId='" + rpcMessageId + '\'' +
                 ", success=" + success +
+                ", term=" + term +
                 '}';
     }
 }

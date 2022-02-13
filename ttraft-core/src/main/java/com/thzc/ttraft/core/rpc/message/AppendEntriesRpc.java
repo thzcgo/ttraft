@@ -3,17 +3,27 @@ package com.thzc.ttraft.core.rpc.message;
 import com.thzc.ttraft.core.log.entry.Entry;
 import com.thzc.ttraft.core.node.NodeId;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class AppendEntriesRpc {
+public class AppendEntriesRpc implements Serializable {
 
+    private String messageId;
     private int term;
     private NodeId leaderId;
     private int prevLogIndex = 0;
     private int prevLogTerm;
     private List<Entry> entries = Collections.emptyList();
     private int leaderCommit;
+
+    public String getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(String messageId) {
+        this.messageId = messageId;
+    }
 
     public int getTerm() {
         return term;
@@ -63,20 +73,20 @@ public class AppendEntriesRpc {
         this.leaderCommit = leaderCommit;
     }
 
-    @Override
-    public String toString() {
-        return "AppendEntriesRpc{" +
-                "term=" + term +
-                ", leaderId=" + leaderId +
-                ", prevLogIndex=" + prevLogIndex +
-                ", prevLogTerm=" + prevLogTerm +
-                ", entries.size=" + entries.size() +
-                ", leaderCommit=" + leaderCommit +
-                '}';
-    }
-
     public int getLastEntryIndex() {
         return this.entries.isEmpty() ? this.prevLogIndex : this.entries.get(this.entries.size() - 1).getIndex();
     }
 
+    @Override
+    public String toString() {
+        return "AppendEntriesRpc{" +
+                "messageId='" + messageId +
+                "', entries.size=" + entries.size() +
+                ", leaderCommit=" + leaderCommit +
+                ", leaderId=" + leaderId +
+                ", prevLogIndex=" + prevLogIndex +
+                ", prevLogTerm=" + prevLogTerm +
+                ", term=" + term +
+                '}';
+    }
 }

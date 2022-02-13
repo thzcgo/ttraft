@@ -148,6 +148,11 @@ public class FileEntrySequence extends AbstractEntrySequence {
         return commitIndex;
     }
 
+    @Override
+    public void close() {
+
+    }
+
     public void commit(int index) {
         if (index < commitIndex) throw new IllegalArgumentException("index 异常");
         if (index == commitIndex) return;

@@ -45,7 +45,7 @@ public class DefaultScheduler implements Scheduler {
     }
 
     @Override
-    public ElectionTimeout schedulerElectionTimeout(Runnable task) {
+    public ElectionTimeout scheduleElectionTimeout(Runnable task) {
         logger.debug("schedule election timeout");
         int timeout = electionTimeoutRandom.nextInt(maxElectionTimeout - minElectionTimeout) + minElectionTimeout;
         ScheduledFuture<?> scheduledFuture = scheduledExecutorService.schedule(task, timeout, TimeUnit.MILLISECONDS);
@@ -53,7 +53,7 @@ public class DefaultScheduler implements Scheduler {
     }
 
     @Override
-    public LogReplicationTask schedulerLogReplicationTask(Runnable task) {
+    public LogReplicationTask scheduleLogReplicationTask(Runnable task) {
         logger.debug("schedule log replication task");
         ScheduledFuture<?> scheduledFuture =
                 scheduledExecutorService.scheduleWithFixedDelay(task, logReplicationDelay, logReplicationInterval,TimeUnit.MILLISECONDS);

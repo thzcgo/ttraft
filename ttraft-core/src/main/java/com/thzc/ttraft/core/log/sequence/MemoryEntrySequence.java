@@ -8,7 +8,6 @@ import java.util.List;
 public class MemoryEntrySequence extends AbstractEntrySequence {
 
     private final List<Entry> entries = new ArrayList<>();
-    private int commitIndex = 0;
 
     public MemoryEntrySequence() {
         this(1);
@@ -34,6 +33,16 @@ public class MemoryEntrySequence extends AbstractEntrySequence {
     }
 
     @Override
+    public void commit(int index) {
+    }
+
+    @Override
+    public int getCommitIndex() {
+        // TODO implement me
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected void doRemoveAfter(int index) {
         if (index < doGetFirstLogIndex()) {
             entries.clear();
@@ -45,19 +54,7 @@ public class MemoryEntrySequence extends AbstractEntrySequence {
     }
 
     @Override
-    public void commit(int index) {
-        commitIndex = index;
-    }
-
-    @Override
-    public int getCommitIndex() {
-        return commitIndex;
-    }
-
-
-    @Override
     public void close() {
-
     }
 
     @Override
@@ -66,7 +63,6 @@ public class MemoryEntrySequence extends AbstractEntrySequence {
                 "logIndexOffset=" + logIndexOffset +
                 ", nextLogIndex=" + nextLogIndex +
                 ", entries.size=" + entries.size() +
-                ", commitIndex=" + commitIndex +
                 '}';
     }
 }
