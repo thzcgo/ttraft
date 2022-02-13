@@ -7,8 +7,12 @@ import com.thzc.ttraft.core.rpc.message.*;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractHandler extends ChannelDuplexHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(AbstractHandler.class);
 
     protected final EventBus eventBus;
     NodeId remoteId;
@@ -30,7 +34,7 @@ public abstract class AbstractHandler extends ChannelDuplexHandler {
         } else if (msg instanceof AppendEntriesResult) {
             AppendEntriesResult result = (AppendEntriesResult) msg;
             if (lastAppendEntriesRpc == null) {
-
+                logger.warn("no last append entries rpc");
             } else {
                 eventBus.post(new AppendEntriesResultMessage(result, remoteId, lastAppendEntriesRpc));
                 lastAppendEntriesRpc = null;

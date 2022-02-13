@@ -2,9 +2,12 @@ package com.thzc.ttraft.core.log.statemachine;
 
 import com.thzc.ttraft.core.support.SingleThreadTaskExecutor;
 import com.thzc.ttraft.core.support.TaskExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractSingleThreadStateMachine implements StateMachine{
 
+    private static final Logger logger = LoggerFactory.getLogger(AbstractSingleThreadStateMachine.class);
     private volatile int lastApplied = 0;
     private final TaskExecutor taskExecutor;
 
@@ -23,6 +26,7 @@ public abstract class AbstractSingleThreadStateMachine implements StateMachine{
     }
     private void doApplyLog(int index, byte[] commandBytes) {
         if (index <= lastApplied) return;
+        logger.debug("apply log {}", index);
         applyCommand(commandBytes);
         lastApplied = index;
     }

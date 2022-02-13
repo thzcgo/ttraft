@@ -14,11 +14,15 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
 
 public class NioConnector implements Connector {
+
+    private static final Logger logger = LoggerFactory.getLogger(NioConnector.class);
 
     // Selector线程池、单线程
     private final NioEventLoopGroup bossNioEventLoopGroup = new NioEventLoopGroup(1);
@@ -65,6 +69,7 @@ public class NioConnector implements Connector {
                         pipeline.addLast(new FromRemoteHandler(eventBus, inboundChannelGroup));
                     }
                 });
+        logger.debug("node listen on port {}", port);
         try {
             serverBootstrap.bind(port).sync();
         } catch (InterruptedException e) {
@@ -92,7 +97,7 @@ public class NioConnector implements Connector {
         Preconditions.checkNotNull(rpc);
         Preconditions.checkNotNull(destinationEndpoints);
         for (NodeEndpoint endpoint : destinationEndpoints) {
-//            logger.debug("send {} to node {}", rpc, endpoint.getId());
+            logger.debug("send {} to node {}", rpc, endpoint.getId());
             try {
                 getChannel(endpoint).writeRequestVoteRpc(rpc);
             } catch (Exception e) {
@@ -103,9 +108,9 @@ public class NioConnector implements Connector {
 
     private void logException(Exception e) {
         if (e instanceof ChannelConnectException) {
-//            logger.warn(e.getMessage());
+            logger.warn(e.getMessage());
         } else {
-//            logger.warn("failed to process channel", e);
+            logger.warn("failed to process channel", e);
         }
     }
 
@@ -113,7 +118,7 @@ public class NioConnector implements Connector {
     public void replyRequestVote(@Nonnull RequestVoteResult result, @Nonnull RequestVoteRpcMessage rpcMessage) {
         Preconditions.checkNotNull(result);
         Preconditions.checkNotNull(rpcMessage);
-//        logger.debug("reply {} to node {}", result, rpcMessage.getSourceNodeId());
+        logger.debug("reply {} to node {}", result, rpcMessage.getSourceNodeId());
         try {
             rpcMessage.getChannel().writeRequestVoteResult(result);
         } catch (Exception e) {
@@ -125,7 +130,7 @@ public class NioConnector implements Connector {
     public void sendAppendEntries(@Nonnull AppendEntriesRpc rpc, @Nonnull NodeEndpoint destinationEndpoint) {
         Preconditions.checkNotNull(rpc);
         Preconditions.checkNotNull(destinationEndpoint);
-//        logger.debug("send {} to node {}", rpc, destinationEndpoint.getId());
+        logger.debug("send {} to node {}", rpc, destinationEndpoint.getId());
         try {
             getChannel(destinationEndpoint).writeAppendEntriesRpc(rpc);
         } catch (Exception e) {
@@ -136,7 +141,7 @@ public class NioConnector implements Connector {
     public void replyAppendEntries(@Nonnull AppendEntriesResult result, @Nonnull AppendEntriesRpcMessage rpcMessage) {
         Preconditions.checkNotNull(result);
         Preconditions.checkNotNull(rpcMessage);
-//        logger.debug("reply {} to node {}", result, rpcMessage.getSourceNodeId());
+        logger.debug("reply {} to node {}", result, rpcMessage.getSourceNodeId());
         try {
             rpcMessage.getChannel().writeAppendEntriesResult(result);
         } catch (Exception e) {

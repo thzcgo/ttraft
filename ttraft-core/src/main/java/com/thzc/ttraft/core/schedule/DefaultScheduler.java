@@ -1,11 +1,15 @@
 package com.thzc.ttraft.core.schedule;
 
 import com.thzc.ttraft.core.node.config.NodeConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Random;
 import java.util.concurrent.*;
 
 public class DefaultScheduler implements Scheduler {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultScheduler.class);
 
     private final int minElectionTimeout; // 最小选举超时时间
     private final int maxElectionTimeout; // 最大选举超时时间
@@ -42,6 +46,7 @@ public class DefaultScheduler implements Scheduler {
 
     @Override
     public ElectionTimeout schedulerElectionTimeout(Runnable task) {
+        logger.debug("schedule election timeout");
         int timeout = electionTimeoutRandom.nextInt(maxElectionTimeout - minElectionTimeout) + minElectionTimeout;
         ScheduledFuture<?> scheduledFuture = scheduledExecutorService.schedule(task, timeout, TimeUnit.MILLISECONDS);
         return new ElectionTimeout(scheduledFuture);
@@ -49,6 +54,7 @@ public class DefaultScheduler implements Scheduler {
 
     @Override
     public LogReplicationTask schedulerLogReplicationTask(Runnable task) {
+        logger.debug("schedule log replication task");
         ScheduledFuture<?> scheduledFuture =
                 scheduledExecutorService.scheduleWithFixedDelay(task, logReplicationDelay, logReplicationInterval,TimeUnit.MILLISECONDS);
         return new LogReplicationTask(scheduledFuture);
@@ -56,6 +62,8 @@ public class DefaultScheduler implements Scheduler {
 
     @Override
     public void stop() throws InterruptedException {
-
+        logger.debug("stop scheduler");
+        scheduledExecutorService.shutdown();
+        scheduledExecutorService.awaitTermination(1, TimeUnit.SECONDS);
     }
 }

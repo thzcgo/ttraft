@@ -3,16 +3,21 @@ package com.thzc.ttraft.core.rpc.nio;
 import com.google.common.eventbus.EventBus;
 import com.thzc.ttraft.core.node.NodeId;
 import com.thzc.ttraft.core.rpc.Address;
+import com.thzc.ttraft.core.rpc.ChannelConnectException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.Channel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
 import java.util.concurrent.*;
 
 public class OutboundChannelGroup {
+
+    private static final Logger logger = LoggerFactory.getLogger(OutboundChannelGroup.class);
 
     private final EventLoopGroup workerGroup;
     private final EventBus eventBus;
@@ -42,8 +47,8 @@ public class OutboundChannelGroup {
             if (e instanceof ExecutionException) {
                 Throwable cause = e.getCause();
                 if (cause instanceof ConnectException) {
-//                    throw new ChannelConnectException("failed to get channel to node " + nodeId +
-//                            ", cause " + cause.getMessage(), cause);
+                    throw new ChannelConnectException("failed to get channel to node " + nodeId +
+                            ", cause " + cause.getMessage(), cause);
                 }
             }
             throw new com.thzc.ttraft.core.rpc.ChannelException("failed to get channel to node " + nodeId, e);
@@ -68,22 +73,22 @@ public class OutboundChannelGroup {
         if (!future.isSuccess()) {
             throw new com.thzc.ttraft.core.rpc.ChannelException("failed to connect", future.cause());
         }
-//        logger.debug("channel OUTBOUND-{} connected", nodeId);
+        logger.debug("channel OUTBOUND-{} connected", nodeId);
         Channel nettyChannel = future.channel();
         nettyChannel.closeFuture().addListener((ChannelFutureListener) cf -> {
-//            logger.debug("channel OUTBOUND-{} disconnected", nodeId);
+            logger.debug("channel OUTBOUND-{} disconnected", nodeId);
             channelMap.remove(nodeId);
         });
         return new NioChannel(nettyChannel);
     }
 
     void closeAll() {
-//        logger.debug("close all outbound channels");
+        logger.debug("close all outbound channels");
         channelMap.forEach((nodeId, nioChannelFuture) -> {
             try {
                 nioChannelFuture.get().close();
             } catch (Exception e) {
-//                logger.warn("failed to close", e);
+                logger.warn("failed to close", e);
             }
         });
     }

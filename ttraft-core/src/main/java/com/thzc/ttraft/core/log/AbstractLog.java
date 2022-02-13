@@ -1,5 +1,6 @@
 package com.thzc.ttraft.core.log;
 
+import com.google.common.eventbus.EventBus;
 import com.thzc.ttraft.core.log.entry.Entry;
 import com.thzc.ttraft.core.log.entry.EntryMeta;
 import com.thzc.ttraft.core.log.entry.GeneralEntry;
@@ -11,15 +12,19 @@ import com.thzc.ttraft.core.log.statemachine.StateMachine;
 import com.thzc.ttraft.core.log.statemachine.StateMachineContext;
 import com.thzc.ttraft.core.node.NodeId;
 import com.thzc.ttraft.core.rpc.message.AppendEntriesRpc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 
 public class AbstractLog implements Log {
 
+    private static final Logger logger = LoggerFactory.getLogger(AbstractLog.class);
     protected EntrySequence entrySequence;
     protected int commitIndex = 0;
     protected StateMachine stateMachine = new EmptyStateMachine();
+
 
     /*******  追加日志项  **************************************************/
     @Override
@@ -50,6 +55,7 @@ public class AbstractLog implements Log {
 
     private void appednEntriesFromLeader(EntrySequenceView newEntries) {
         if (newEntries.isEmpty()) return;
+        logger.debug("append entries from leader from {} to {}", newEntries.getFirstLogIndex(), newEntries.getLastLogIndex());
         for (Entry leaderEntry : newEntries) {
             entrySequence.append(leaderEntry);
         }
@@ -97,6 +103,7 @@ public class AbstractLog implements Log {
     @Override
     public void advanceCommitIndex(int newCommitIndex, int currentTerm) {
         if (!validateNewCommitIndex(newCommitIndex, currentTerm)) return;
+        logger.debug("advance commit index from {} to {}", commitIndex, newCommitIndex);
         entrySequence.commit(newCommitIndex);
         commitIndex = newCommitIndex;
 
@@ -167,6 +174,7 @@ public class AbstractLog implements Log {
     @Override
     public boolean isNewerThen(int lastLogIndex, int lastLogTerm) {
         EntryMeta entryMeta = getLastEntryMeta();
+        logger.debug("last entry ({}, {}), candidate ({}, {})", entryMeta.getIndex(), entryMeta.getTerm(), lastLogIndex, lastLogTerm);
         return getLastEntryMeta().getTerm() > lastLogTerm || getLastEntryMeta().getIndex() > lastLogIndex;
     }
 

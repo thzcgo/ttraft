@@ -71,7 +71,7 @@ public class NodeContext {
         this.scheduler = scheduler;
     }
 
-    public NodeMode getModee() {
+    public NodeMode getMode() {
         return mode;
     }
 

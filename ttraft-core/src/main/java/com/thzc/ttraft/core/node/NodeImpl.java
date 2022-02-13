@@ -11,12 +11,16 @@ import com.thzc.ttraft.core.rpc.message.*;
 import com.thzc.ttraft.core.rpc.message.RequestVoteRpcMessage;
 import com.thzc.ttraft.core.schedule.ElectionTimeout;
 import com.thzc.ttraft.core.schedule.LogReplicationTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
 public class NodeImpl implements Node {
+
+    private static final Logger logger = LoggerFactory.getLogger(NodeImpl.class);
 
     private AbstractNodeRole role; // 当前的角色
     private final NodeContext context;
@@ -55,13 +59,14 @@ public class NodeImpl implements Node {
         if (newRole.getName() == RoleName.FOLLOWER) {
             store.setVotedFor(((FollowerNodeRole)newRole).getVotedFor());
         }
+        logger.debug("node {}, role state changed -> {}", context.getSelfId(), newRole);
         role = newRole;
     }
 
     private void changeToFollower(int term, NodeId votedFor, NodeId leaderId, boolean scheduleElectionTimeout) {
         role.cancelTimeoutOrTask();
         if (leaderId != null && !leaderId.equals(context.getSelfId())) {
-            //
+            logger.info("current leader is {}, term {}", leaderId, term);
         }
         ElectionTimeout electionTimeout = scheduleElectionTimeout ? scheduleElectionTimeout() : ElectionTimeout.NONE;
         changeToRole(new FollowerNodeRole(term, votedFor, leaderId, electionTimeout));
@@ -81,17 +86,28 @@ public class NodeImpl implements Node {
     }
 
     private void doProcessElectionTimeout() {
-        if (role.getName() == RoleName.LEADER) return;
+        if (role.getName() == RoleName.LEADER) {
+            logger.warn("node {}, current role is leader, ignore election timeout", context.getSelfId());
+            return;
+        }
         int newTerm = role.getTerm() + 1;
         role.cancelTimeoutOrTask();
 
         // 判断是否为单机模式
         if (context.getGroup().isStandalone()) {
-            resetReplicatingStates();
-            changeToRole(new LeaderNodeRole(newTerm, scheduleLogReplicationTask())); // 单机模式下只有一个leader节点
-            context.getLog().appendEntry(newTerm);
+            if (context.getMode() == NodeMode.STANDBY) {
+                logger.info("starts with standby mode, skip election");
+            } else {
+
+                // become leader
+                logger.info("become leader, term {}", newTerm);
+                resetReplicatingStates();
+                changeToRole(new LeaderNodeRole(newTerm, scheduleLogReplicationTask()));
+                context.getLog().appendEntry(newTerm); // no-op log
+            }
         } else {
             // follower -> candidate
+            logger.info("start election");
             changeToRole(new CandidateNodeRole(newTerm, scheduleElectionTimeout()));
             EntryMeta lastEntryMeta = context.getLog().getLastEntryMeta();
             // 发送 RequestVote
@@ -124,6 +140,7 @@ public class NodeImpl implements Node {
     private RequestVoteResult doProcessRequestVoteRpc(RequestVoteRpcMessage rpcMessage) {
         RequestVoteRpc rpc = rpcMessage.getRpc();
         if (rpc.getTerm() < role.getTerm()) {
+            logger.debug("term from rpc < current term, don't vote ({} < {})", rpc.getTerm(), role.getTerm());
             return new RequestVoteResult(role.getTerm(), false);
         }
 
@@ -171,14 +188,18 @@ public class NodeImpl implements Node {
             changeToFollower(result.getTerm(), null, null, true);
             return;
         }
-        if (role.getName() != RoleName.CANDIDATE) return;
+        if (role.getName() != RoleName.CANDIDATE) {
+            logger.debug("receive request vote result and current role is not candidate, ignore");
+            return;
+        }
         if (result.getTerm() < role.getTerm() || !result.isVoteGranted()) return;
 
         int currentVotesCount = ((CandidateNodeRole)role).getVotesCount() + 1;
         int countOfMajor = context.getGroup().getCount();
-
+        logger.debug("votes count {}, major node count {}", currentVotesCount, countOfMajor);
         role.cancelTimeoutOrTask();
         if (currentVotesCount > countOfMajor / 2) {
+            logger.info("become leader, term {}", role.getTerm());
             changeToRole(new LeaderNodeRole(role.getTerm(), scheduleLogReplicationTask()));
         } else {
             changeToRole(new CandidateNodeRole(role.getTerm(), currentVotesCount, scheduleElectionTimeout()));
@@ -205,6 +226,7 @@ public class NodeImpl implements Node {
             context.getLog().advanceCommitIndex(context.getLog().getNextIndex() - 1, role.getTerm());
             return;
         }
+        logger.debug("replicate log");
         for (NodeGroupMember member : context.getGroup().listReplicationTarget()) {
             doReplicateLog(member);
         }
@@ -255,6 +277,7 @@ public class NodeImpl implements Node {
                 changeToFollower(rpc.getTerm(), null, rpc.getLeaderId(), true);
                 return new AppendEntriesResult(rpc.getTerm(), appendEntries(rpc));
             case LEADER:
+                logger.warn("receive append entries rpc from another leader {}, ignore", rpc.getLeaderId());
                 return new AppendEntriesResult(rpc.getTerm(), false);
             default:
                 throw new IllegalStateException("节点名异常");
@@ -288,20 +311,23 @@ public class NodeImpl implements Node {
             return;
         }
         if (role.getName() != RoleName.LEADER) {
-            //
+            logger.warn("receive append entries result from node {} but current node is not leader, ignore", resultMessage.getSourceNodeId());
             return;
         }
 
         NodeId sourceId = resultMessage.getSourceNodeId();
         NodeGroupMember member = context.getGroup().getMember(sourceId);
-        if (member == null) return;
+        if (member == null) {
+            logger.info("unexpected append entries result from node {}, node maybe removed", sourceId);
+            return;
+        }
         AppendEntriesRpc rpc = resultMessage.getAppendEntriesRpc();
         if (result.isSuccess()) {
             if (member.advanceReplicationState(rpc.getLastEntryIndex())) {
                 context.getLog().advanceCommitIndex(context.getGroup().getMatchIndexOfMajor(), role.getTerm());
             } else {
                 if (!member.backOffNextIndex()) {
-
+                    logger.warn("cannot back off next index more, node {}", sourceId);
                 }
             }
         }
@@ -337,7 +363,7 @@ public class NodeImpl implements Node {
 
         @Override
         public void onFailure(@Nonnull Throwable t) {
-
+            logger.warn("failure", t);
         }
     };
 

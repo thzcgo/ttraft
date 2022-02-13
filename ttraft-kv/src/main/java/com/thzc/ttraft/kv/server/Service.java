@@ -5,6 +5,8 @@ import com.thzc.ttraft.core.node.Node;
 import com.thzc.ttraft.core.node.role.RoleName;
 import com.thzc.ttraft.core.node.role.RoleNameAndLeaderId;
 import com.thzc.ttraft.kv.server.message.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class Service {
+
+    private static final Logger logger = LoggerFactory.getLogger(Service.class);
 
     private final Node node;
     private final ConcurrentMap<String, CommandRequest<?>> pendingCommands = new ConcurrentHashMap<>();
@@ -24,6 +28,7 @@ public class Service {
 
     public void get(CommandRequest<GetCommand> getCommandCommandRequest) {
         String key = getCommandCommandRequest.getCommand().getKey();
+        logger.debug("get {}", key);
         byte[] value = this.map.get(key);
         getCommandCommandRequest.reply(new GetCommandResponse(value));
     }
@@ -37,6 +42,7 @@ public class Service {
         }
         // 有请求过来时缓存该请求ID和commandRequest的映射，用于回复
         SetCommand command = commandRequest.getCommand();
+        logger.debug("set {}", command.getKey());
         this.pendingCommands.put(command.getRequestId(), commandRequest);
         // 通道关闭时，移除请求ID相关映射
         commandRequest.addCloseListener(() -> pendingCommands.remove(command.getRequestId()));

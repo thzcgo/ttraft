@@ -1,5 +1,8 @@
 package com.thzc.ttraft.core.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -9,6 +12,7 @@ import java.util.stream.Collectors;
 * */
 public class NodeGroup {
 
+    private static final Logger logger = LoggerFactory.getLogger(NodeGroup.class);
     private final NodeId selfId;
     private Map<NodeId, NodeGroupMember> memberMap;
 
@@ -73,6 +77,7 @@ public class NodeGroup {
         int count = matchIndices.size();
         if (count == 0) throw new IllegalStateException("无稳定节点");
         Collections.sort(matchIndices);
+        logger.debug("match indices {}", matchIndices);
         return matchIndices.get(count/2).getMatchIndex();
     }
 

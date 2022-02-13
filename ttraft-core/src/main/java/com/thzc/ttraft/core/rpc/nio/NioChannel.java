@@ -6,6 +6,8 @@ import com.thzc.ttraft.core.rpc.message.AppendEntriesRpc;
 import com.thzc.ttraft.core.rpc.message.RequestVoteResult;
 import com.thzc.ttraft.core.rpc.message.RequestVoteRpc;
 import io.netty.channel.ChannelException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NioChannel implements Channel {
 

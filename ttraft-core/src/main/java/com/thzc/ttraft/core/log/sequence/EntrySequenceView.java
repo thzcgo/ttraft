@@ -26,11 +26,11 @@ public class EntrySequenceView implements Iterable<Entry> {
         return entries.get(index);
     }
 
-    int getFirstLogIndex() {
+    public int getFirstLogIndex() {
         return firstLogIndex;
     }
 
-    int getLastLogIndex() {
+    public int getLastLogIndex() {
         return lastLogIndex;
     }
 
