@@ -515,7 +515,8 @@ public class NodeImpl implements Node {
         }
 
         AppendEntriesRpc rpc = resultMessage.getAppendEntriesRpc();
-        if (result.isSuccess()) {
+        if (true) {
+//        if (result.isSuccess()) {
             if (!member.isMajor()) {  // removing node
                 if (member.isRemoving()) {
                     logger.debug("node {} is removing, skip", sourceNodeId);
