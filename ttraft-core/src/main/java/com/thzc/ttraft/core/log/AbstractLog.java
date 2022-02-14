@@ -93,14 +93,14 @@ abstract class AbstractLog implements Log {
 
     @Override
     public NoOpEntry appendEntry(int term) {
-        NoOpEntry entry = new NoOpEntry(entrySequence.getNextLogIndex(), term);
+        NoOpEntry entry = new NoOpEntry(term, entrySequence.getNextLogIndex());
         entrySequence.append(entry);
         return entry;
     }
 
     @Override
     public GeneralEntry appendEntry(int term, byte[] command) {
-        GeneralEntry entry = new GeneralEntry(entrySequence.getNextLogIndex(), term, command);
+        GeneralEntry entry = new GeneralEntry(term, entrySequence.getNextLogIndex(), command);
         entrySequence.append(entry);
         return entry;
     }
