@@ -1,7 +1,7 @@
 package com.thzc.ttraft.core.log.statemachine;
 
-import com.thzc.ttraft.core.support.SingleThreadTaskExecutor;
-import com.thzc.ttraft.core.support.TaskExecutor;
+import com.thzc.ttraft.core.schedule.SingleThreadTaskExecutor;
+import com.thzc.ttraft.core.schedule.TaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

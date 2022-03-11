@@ -1,14 +1,13 @@
-package com.thzc.ttraft.core.support;
+package com.thzc.ttraft.core.schedule;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
-import com.thzc.ttraft.core.support.AbstractTaskExecutor;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.concurrent.*;
 
-public class SingleThreadTaskExecutor extends AbstractTaskExecutor {
+public class SingleThreadTaskExecutor implements TaskExecutor {
 
     private final ExecutorService executorService;
 
@@ -36,20 +35,6 @@ public class SingleThreadTaskExecutor extends AbstractTaskExecutor {
     public <V> Future<V> submit(@Nonnull Callable<V> task) {
         Preconditions.checkNotNull(task);
         return executorService.submit(task);
-    }
-
-    @Override
-    public void submit(@Nonnull Runnable task, @Nonnull Collection<FutureCallback<Object>> callbacks) {
-        Preconditions.checkNotNull(task);
-        Preconditions.checkNotNull(callbacks);
-        executorService.submit(() -> {
-            try {
-                task.run();
-                callbacks.forEach(c -> c.onSuccess(null));
-            } catch (Exception e) {
-                callbacks.forEach(c -> c.onFailure(e));
-            }
-        });
     }
 
     @Override

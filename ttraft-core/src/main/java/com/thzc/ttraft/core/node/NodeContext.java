@@ -6,7 +6,7 @@ import com.thzc.ttraft.core.node.config.NodeConfig;
 import com.thzc.ttraft.core.node.store.NodeStore;
 import com.thzc.ttraft.core.rpc.Connector;
 import com.thzc.ttraft.core.schedule.Scheduler;
-import com.thzc.ttraft.core.support.TaskExecutor;
+import com.thzc.ttraft.core.schedule.TaskExecutor;
 
 public class NodeContext {
 
@@ -15,13 +15,12 @@ public class NodeContext {
     private NodeStore store;
     private NodeMode mode;
     private NodeConfig config;
-
     private Log log;
     private Connector connector;
     private EventBus eventBus;
     private Scheduler scheduler;
     private TaskExecutor taskExecutor;
-    private TaskExecutor groupConfigChangeTaskExecutor;
+
 
     public NodeId getSelfId() {
         return selfId;
@@ -101,14 +100,6 @@ public class NodeContext {
 
     public void setTaskExecutor(TaskExecutor taskExecutor) {
         this.taskExecutor = taskExecutor;
-    }
-
-    public TaskExecutor getGroupConfigChangeTaskExecutor() {
-        return groupConfigChangeTaskExecutor;
-    }
-
-    public void setGroupConfigChangeTaskExecutor(TaskExecutor groupConfigChangeTaskExecutor) {
-        this.groupConfigChangeTaskExecutor = groupConfigChangeTaskExecutor;
     }
 
 }

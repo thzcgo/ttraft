@@ -5,9 +5,7 @@ import com.thzc.ttraft.core.node.NodeId;
 
 import javax.annotation.Nonnull;
 
-/**
- * Default role state.
- */
+
 public class DefaultRoleState implements RoleState {
 
     private final RoleName roleName;

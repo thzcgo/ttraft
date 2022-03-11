@@ -19,52 +19,41 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
 @ThreadSafe
 public class NodeImpl implements Node {
 
     private static final Logger logger = LoggerFactory.getLogger(NodeImpl.class);
 
-    // callback for async tasks.
-    private static final FutureCallback<Object> LOGGING_FUTURE_CALLBACK = new FutureCallback<Object>() {
-        @Override
-        public void onSuccess(@Nullable Object result) {
-        }
-
-        @Override
-        public void onFailure(@Nonnull Throwable t) {
-            logger.warn("failure", t);
-        }
-    };
-
     private final NodeContext context;
     @GuardedBy("this")
     private boolean started;
     private volatile AbstractNodeRole role;
 
-
-    /**
-     * Create with context.
-     *
-     * @param context context
-     */
+    /*
+    *  用NodeContext构造节点
+    * */
     NodeImpl(NodeContext context) {
         this.context = context;
     }
 
-    /**
-     * Get context.
-     *
-     * @return context
-     */
     NodeContext getContext() {
         return context;
+    }
+
+    @Override
+    public synchronized void start() {
+        if (started) {
+            return;
+        }
+        context.getEventBus().register(this);
+        context.getConnector().initialize();
+        // load term, votedFor from store and become follower
+        NodeStore store = context.getStore();
+        changeToRole(new FollowerNodeRole(store.getTerm(), store.getVotedFor(), null, scheduleElectionTimeout()));
+        started = true;
     }
 
     @Override
@@ -79,22 +68,6 @@ public class NodeImpl implements Node {
         return role.getNameAndLeaderId(context.getSelfId());
     }
 
-
-
-    @Override
-    public synchronized void start() {
-        if (started) {
-            return;
-        }
-        context.getEventBus().register(this);
-        context.getConnector().initialize();
-
-        // load term, votedFor from store and become follower
-        NodeStore store = context.getStore();
-        changeToRole(new FollowerNodeRole(store.getTerm(), store.getVotedFor(), null, scheduleElectionTimeout()));
-        started = true;
-    }
-
     @Override
     public void appendLog(@Nonnull byte[] commandBytes) {
         Preconditions.checkNotNull(commandBytes);
@@ -102,7 +75,7 @@ public class NodeImpl implements Node {
         context.getTaskExecutor().submit(() -> {
             context.getLog().appendEntry(role.getTerm(), commandBytes);
             doReplicateLog();
-        }, LOGGING_FUTURE_CALLBACK);
+        });
     }
 
 
@@ -121,75 +94,17 @@ public class NodeImpl implements Node {
     }
 
 
-    /**
-     * Election timeout
-     * <p>
-     * Source: scheduler
-     * </p>
-     */
-    void electionTimeout() {
-        context.getTaskExecutor().submit(this::doProcessElectionTimeout, LOGGING_FUTURE_CALLBACK);
-    }
 
-    private void doProcessElectionTimeout() {
-        if (role.getName() == RoleName.LEADER) {
-            logger.warn("node {}, current role is leader, ignore election timeout", context.getSelfId());
-            return;
-        }
-
-        // follower: start election
-        // candidate: restart election
-        int newTerm = role.getTerm() + 1;
-        role.cancelTimeoutOrTask();
-
-        if (context.getGroup().isStandalone()) {
-            if (context.getMode() == NodeMode.STANDBY) {
-                logger.info("starts with standby mode, skip election");
-            } else {
-
-                // become leader
-                logger.info("become leader, term {}", newTerm);
-                resetReplicatingStates();
-                changeToRole(new LeaderNodeRole(newTerm, scheduleLogReplicationTask()));
-                context.getLog().appendEntry(newTerm); // no-op log
-            }
-        } else {
-            logger.info("start election");
-            changeToRole(new CandidateNodeRole(newTerm, scheduleElectionTimeout()));
-
-            // request vote
-            EntryMeta lastEntryMeta = context.getLog().getLastEntryMeta();
-            RequestVoteRpc rpc = new RequestVoteRpc();
-            rpc.setTerm(newTerm);
-            rpc.setCandidateId(context.getSelfId());
-            rpc.setLastLogIndex(lastEntryMeta.getIndex());
-            rpc.setLastLogTerm(lastEntryMeta.getTerm());
-            context.getConnector().sendRequestVote(rpc, context.getGroup().listEndpointOfMajorExceptSelf());
-        }
-    }
-
-    /**
-     * Become follower.
-     *
-     * @param term                    term
-     * @param votedFor                voted for
-     * @param leaderId                leader id
-     * @param scheduleElectionTimeout schedule election timeout or not
-     */
-    private void becomeFollower(int term, NodeId votedFor, NodeId leaderId, boolean scheduleElectionTimeout) {
+    private void becomeFollower(int term, NodeId votedFor, NodeId leaderId) {
         role.cancelTimeoutOrTask();
         if (leaderId != null && !leaderId.equals(role.getLeaderId(context.getSelfId()))) {
             logger.info("current leader is {}, term {}", leaderId, term);
         }
-        ElectionTimeout electionTimeout = scheduleElectionTimeout ? scheduleElectionTimeout() : ElectionTimeout.NONE;
+        ElectionTimeout electionTimeout = scheduleElectionTimeout();
         changeToRole(new FollowerNodeRole(term, votedFor, leaderId, electionTimeout));
     }
 
-    /**
-     * Change role.
-     *
-     * @param newRole new role
-     */
+
     private void changeToRole(AbstractNodeRole newRole) {
         if (!isStableBetween(role, newRole)) {
             logger.debug("node {}, role state changed -> {}", context.getSelfId(), newRole);
@@ -199,9 +114,6 @@ public class NodeImpl implements Node {
             NodeStore store = context.getStore();
             store.setTerm(state.getTerm());
             store.setVotedFor(state.getVotedFor());
-
-            // notify listeners
-//            roleListeners.forEach(l -> l.nodeRoleChanged(state));
         }
         role = newRole;
     }
@@ -225,13 +137,54 @@ public class NodeImpl implements Node {
         return before != null && before.stateEquals(after);
     }
 
+    /*****************  选举超时部分   *****************************************************************************/
     /**
-     * Schedule election timeout.
-     *
-     * @return election timeout
+     * 节点建立初，转成follower时开始进行选举超时任务
+     * @return
      */
     private ElectionTimeout scheduleElectionTimeout() {
         return context.getScheduler().scheduleElectionTimeout(this::electionTimeout);
+    }
+
+    void electionTimeout() {
+        context.getTaskExecutor().submit(this::doProcessElectionTimeout);
+    }
+
+    private void doProcessElectionTimeout() {
+        if (role.getName() == RoleName.LEADER) {
+            logger.warn("node {}, current role is leader, ignore election timeout", context.getSelfId());
+            return;
+        }
+
+        // follower: start election
+        // candidate: restart election
+        int newTerm = role.getTerm() + 1;
+        role.cancelTimeoutOrTask();
+
+        if (context.getGroup().isStandalone()) {  // 单机模式下不需要选举超时了，也就无需发送 RequestVoteRpc
+            if (context.getMode() == NodeMode.STANDBY) {
+                logger.info("starts with standby mode, skip election");
+            } else {
+
+                // become leader
+                logger.info("become leader, term {}", newTerm);
+                resetReplicatingStates();
+                changeToRole(new LeaderNodeRole(newTerm, scheduleLogReplicationTask()));  // 启动 日志复制任务
+                context.getLog().appendEntry(newTerm); // no-op log
+            }
+        } else {
+            logger.info("start election");
+            changeToRole(new CandidateNodeRole(newTerm, scheduleElectionTimeout()));
+
+            // request vote
+            EntryMeta lastEntryMeta = context.getLog().getLastEntryMeta();
+            RequestVoteRpc rpc = new RequestVoteRpc();
+            rpc.setTerm(newTerm);
+            rpc.setCandidateId(context.getSelfId());
+            rpc.setLastLogIndex(lastEntryMeta.getIndex());
+            rpc.setLastLogTerm(lastEntryMeta.getTerm());
+            context.getConnector().sendRequestVote(rpc, context.getGroup().listEndpointOfMajorExceptSelf());
+        }
     }
 
     /**
@@ -240,29 +193,22 @@ public class NodeImpl implements Node {
     private void resetReplicatingStates() {
         context.getGroup().resetReplicatingStates(context.getLog().getNextIndex());
     }
+    /*****************  选举超时部分 结束   *****************************************************************************/
 
-    /**
-     * Schedule log replication task.
-     *
-     * @return log replication task
-     */
+
+
+
+    /*****************  日志复制部分 开始   *****************************************************************************/
     private LogReplicationTask scheduleLogReplicationTask() {
         return context.getScheduler().scheduleLogReplicationTask(this::replicateLog);
     }
 
-    /**
-     * Replicate log.
-     * <p>
-     * Source: scheduler.
-     * </p>
-     */
+
     void replicateLog() {
-        context.getTaskExecutor().submit(this::doReplicateLog, LOGGING_FUTURE_CALLBACK);
+        context.getTaskExecutor().submit(this::doReplicateLog);
     }
 
-    /**
-     * Replicate log to other nodes.
-     */
+
     private void doReplicateLog() {
         // just advance commit index if is unique node
         if (context.getGroup().isStandalone()) {
@@ -272,41 +218,28 @@ public class NodeImpl implements Node {
         logger.debug("replicate log");
         for (NodeGroupMember member : context.getGroup().listReplicationTarget()) {
             if (member.shouldReplicate(context.getConfig().getLogReplicationReadTimeout())) {
-                doReplicateLog(member, context.getConfig().getMaxReplicationEntries());
+                doReplicateLog0(member, context.getConfig().getMaxReplicationEntries());
             } else {
                 logger.debug("node {} is replicating, skip replication task", member.getId());
             }
         }
     }
 
-    /**
-     * Replicate log to specified node.
-     * <p>
-     * Normally it will send append entries rpc to node. And change to install snapshot rpc if entry in snapshot.
-     * </p>
-     *
-     * @param member     node
-     * @param maxEntries max entries
-     */
-    private void doReplicateLog(NodeGroupMember member, int maxEntries) {
+    private void doReplicateLog0(NodeGroupMember member, int maxEntries) {
         member.replicateNow();
         AppendEntriesRpc rpc = context.getLog().createAppendEntriesRpc(role.getTerm(), context.getSelfId(), member.getNextIndex(), maxEntries);
         context.getConnector().sendAppendEntries(rpc, member.getEndpoint());
     }
+    /*****************  日志复制部分 结束   *****************************************************************************/
 
-    /**
-     * Receive request vote rpc.
-     * <p>
-     * Source: connector.
-     * </p>
-     *
-     * @param rpcMessage rpc message
-     */
+
+
+
+    /***********  节点收到RequestVoteRpc消息   ********************************************************************/
     @Subscribe
     public void onReceiveRequestVoteRpc(RequestVoteRpcMessage rpcMessage) {
         context.getTaskExecutor().submit(
-                () -> context.getConnector().replyRequestVote(doProcessRequestVoteRpc(rpcMessage), rpcMessage),
-                LOGGING_FUTURE_CALLBACK
+                () -> context.getConnector().replyRequestVote(doProcessRequestVoteRpc(rpcMessage), rpcMessage)
         );
     }
 
@@ -328,7 +261,7 @@ public class NodeImpl implements Node {
         // step down if result's term is larger than current term
         if (rpc.getTerm() > role.getTerm()) {
             boolean voteForCandidate = !context.getLog().isNewerThan(rpc.getLastLogIndex(), rpc.getLastLogTerm());
-            becomeFollower(rpc.getTerm(), (voteForCandidate ? rpc.getCandidateId() : null), null, true);
+            becomeFollower(rpc.getTerm(), (voteForCandidate ? rpc.getCandidateId() : null), null);
             return new RequestVoteResult(rpc.getTerm(), voteForCandidate);
         }
 
@@ -342,7 +275,7 @@ public class NodeImpl implements Node {
                 // 2. voted for candidate
                 if ((votedFor == null && !context.getLog().isNewerThan(rpc.getLastLogIndex(), rpc.getLastLogTerm())) ||
                         Objects.equals(votedFor, rpc.getCandidateId())) {
-                    becomeFollower(role.getTerm(), rpc.getCandidateId(), null, true);
+                    becomeFollower(role.getTerm(), rpc.getCandidateId(), null);
                     return new RequestVoteResult(rpc.getTerm(), true);
                 }
                 return new RequestVoteResult(role.getTerm(), false);
@@ -354,17 +287,10 @@ public class NodeImpl implements Node {
         }
     }
 
-    /**
-     * Receive request vote result.
-     * <p>
-     * Source: connector.
-     * </p>
-     *
-     * @param result result
-     */
+    /***********  节点收到 RequestVoteResult 消息   ******************************************************************/
     @Subscribe
     public void onReceiveRequestVoteResult(RequestVoteResult result) {
-        context.getTaskExecutor().submit(() -> doProcessRequestVoteResult(result), LOGGING_FUTURE_CALLBACK);
+        context.getTaskExecutor().submit(() -> doProcessRequestVoteResult(result));
     }
 
     Future<?> processRequestVoteResult(RequestVoteResult result) {
@@ -375,7 +301,7 @@ public class NodeImpl implements Node {
 
         // step down if result's term is larger than current term
         if (result.getTerm() > role.getTerm()) {
-            becomeFollower(result.getTerm(), null, null, true);
+            becomeFollower(result.getTerm(), null, null);
             return;
         }
 
@@ -409,19 +335,12 @@ public class NodeImpl implements Node {
         }
     }
 
-    /**
-     * Receive append entries rpc.
-     * <p>
-     * Source: connector.
-     * </p>
-     *
-     * @param rpcMessage rpc message
-     */
+
+    /***********  节点收到 AppendEntriesRpc 消息   ******************************************************************/
     @Subscribe
     public void onReceiveAppendEntriesRpc(AppendEntriesRpcMessage rpcMessage) {
         context.getTaskExecutor().submit(() ->
-                        context.getConnector().replyAppendEntries(doProcessAppendEntriesRpc(rpcMessage), rpcMessage),
-                LOGGING_FUTURE_CALLBACK
+                        context.getConnector().replyAppendEntries(doProcessAppendEntriesRpc(rpcMessage), rpcMessage)
         );
     }
 
@@ -435,7 +354,7 @@ public class NodeImpl implements Node {
 
         // if term in rpc is larger than current term, step down and append entries
         if (rpc.getTerm() > role.getTerm()) {
-            becomeFollower(rpc.getTerm(), null, rpc.getLeaderId(), true);
+            becomeFollower(rpc.getTerm(), null, rpc.getLeaderId());
             return new AppendEntriesResult(rpc.getMessageId(), rpc.getTerm(), appendEntries(rpc));
         }
 
@@ -444,12 +363,12 @@ public class NodeImpl implements Node {
             case FOLLOWER:
 
                 // reset election timeout and append entries
-                becomeFollower(rpc.getTerm(), ((FollowerNodeRole) role).getVotedFor(), rpc.getLeaderId(), true);
+                becomeFollower(rpc.getTerm(), ((FollowerNodeRole) role).getVotedFor(), rpc.getLeaderId());
                 return new AppendEntriesResult(rpc.getMessageId(), rpc.getTerm(), appendEntries(rpc));
             case CANDIDATE:
 
                 // more than one candidate but another node won the election
-                becomeFollower(rpc.getTerm(), null, rpc.getLeaderId(), true);
+                becomeFollower(rpc.getTerm(), null, rpc.getLeaderId());
                 return new AppendEntriesResult(rpc.getMessageId(), rpc.getTerm(), appendEntries(rpc));
             case LEADER:
                 logger.warn("receive append entries rpc from another leader {}, ignore", rpc.getLeaderId());
@@ -473,14 +392,10 @@ public class NodeImpl implements Node {
         return result;
     }
 
-    /**
-     * Receive append entries result.
-     *
-     * @param resultMessage result message
-     */
+    /***********  节点收到 AppendEntriesResult 消息   ******************************************************************/
     @Subscribe
     public void onReceiveAppendEntriesResult(AppendEntriesResultMessage resultMessage) {
-        context.getTaskExecutor().submit(() -> doProcessAppendEntriesResult(resultMessage), LOGGING_FUTURE_CALLBACK);
+        context.getTaskExecutor().submit(() -> doProcessAppendEntriesResult(resultMessage));
     }
 
     Future<?> processAppendEntriesResult(AppendEntriesResultMessage resultMessage) {
@@ -492,7 +407,7 @@ public class NodeImpl implements Node {
 
         // step down if result's term is larger than current term
         if (result.getTerm() > role.getTerm()) {
-            becomeFollower(result.getTerm(), null, null, true);
+            becomeFollower(result.getTerm(), null, null);
             return;
         }
 
@@ -549,23 +464,12 @@ public class NodeImpl implements Node {
         }
 
         // replicate log to node immediately other than wait for next log replication
-        doReplicateLog(member, context.getConfig().getMaxReplicationEntries());
+        doReplicateLog0(member, context.getConfig().getMaxReplicationEntries());
     }
 
 
 
-    /**
-     * Dead event.
-     * <p>
-     * Source: event-bus.
-     * </p>
-     *
-     * @param deadEvent dead event
-     */
-    @Subscribe
-    public void onReceiveDeadEvent(DeadEvent deadEvent) {
-        logger.warn("dead event {}", deadEvent);
-    }
+
 
     @Override
     public synchronized void stop() throws InterruptedException {
@@ -577,7 +481,6 @@ public class NodeImpl implements Node {
         context.getConnector().close();
         context.getStore().close();
         context.getTaskExecutor().shutdown();
-        context.getGroupConfigChangeTaskExecutor().shutdown();
         started = false;
     }
 

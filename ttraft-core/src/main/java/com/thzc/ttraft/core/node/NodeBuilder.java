@@ -13,8 +13,8 @@ import com.thzc.ttraft.core.rpc.Connector;
 import com.thzc.ttraft.core.rpc.nio.NioConnector;
 import com.thzc.ttraft.core.schedule.DefaultScheduler;
 import com.thzc.ttraft.core.schedule.Scheduler;
-import com.thzc.ttraft.core.support.ListeningTaskExecutor;
-import com.thzc.ttraft.core.support.TaskExecutor;
+import com.thzc.ttraft.core.schedule.SingleThreadTaskExecutor;
+import com.thzc.ttraft.core.schedule.TaskExecutor;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import javax.annotation.Nonnull;
@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.Executors;
 
 public class NodeBuilder {
 
@@ -35,10 +34,7 @@ public class NodeBuilder {
     private Scheduler scheduler = null;
     private Connector connector = null;
     private TaskExecutor taskExecutor = null;
-    private TaskExecutor groupConfigChangeTaskExecutor = null;
-
     private boolean standby = false;
-
     private NioEventLoopGroup workerNioEventLoopGroup = null;
 
 
@@ -53,16 +49,6 @@ public class NodeBuilder {
         this.selfId = selfId;
         this.eventBus = new EventBus(selfId.getValue());
     }
-
-//    @Deprecated
-//    public NodeBuilder(@Nonnull NodeId selfId, @Nonnull NodeGroup group) {
-//        Preconditions.checkNotNull(selfId);
-//        Preconditions.checkNotNull(group);
-//        this.selfId = selfId;
-//        this.group = group;
-//        this.eventBus = new EventBus(selfId.getValue());
-//    }
-
 
     public NodeBuilder setStandby(boolean standby) {
         this.standby = standby;
@@ -102,12 +88,6 @@ public class NodeBuilder {
         return this;
     }
 
-    NodeBuilder setGroupConfigChangeTaskExecutor(@Nonnull TaskExecutor groupConfigChangeTaskExecutor) {
-        Preconditions.checkNotNull(groupConfigChangeTaskExecutor);
-        this.groupConfigChangeTaskExecutor = groupConfigChangeTaskExecutor;
-        return this;
-    }
-
     NodeBuilder setStore(@Nonnull NodeStore store) {
         Preconditions.checkNotNull(store);
         this.store = store;
@@ -144,12 +124,11 @@ public class NodeBuilder {
         context.setEventBus(eventBus);
         context.setScheduler(scheduler != null ? scheduler : new DefaultScheduler(config));
         context.setConnector(connector != null ? connector : createNioConnector());
-        context.setTaskExecutor(taskExecutor != null ? taskExecutor : new ListeningTaskExecutor(
-                Executors.newSingleThreadExecutor(r -> new Thread(r, "node"))
-        ));
-        // TODO share monitor
-        context.setGroupConfigChangeTaskExecutor(groupConfigChangeTaskExecutor != null ? groupConfigChangeTaskExecutor :
-                new ListeningTaskExecutor(Executors.newSingleThreadExecutor(r -> new Thread(r, "group-config-change"))));
+//        context.setTaskExecutor(taskExecutor != null ? taskExecutor :  new ListeningTaskExecutor(
+//                Executors.newSingleThreadExecutor(r -> new Thread(r, "node"))
+//        ));
+        context.setTaskExecutor(taskExecutor != null ? taskExecutor :  new SingleThreadTaskExecutor("node"));
+
         return context;
     }
 

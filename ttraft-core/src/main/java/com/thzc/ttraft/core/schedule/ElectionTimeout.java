@@ -10,7 +10,6 @@ public class ElectionTimeout {
 
     private static final Logger logger = LoggerFactory.getLogger(ElectionTimeout.class);
 
-    public static final ElectionTimeout NONE = new ElectionTimeout(new NullScheduledFuture());
     private final ScheduledFuture<?> scheduledFuture;
 
     public ElectionTimeout(ScheduledFuture<?> scheduledFuture) {

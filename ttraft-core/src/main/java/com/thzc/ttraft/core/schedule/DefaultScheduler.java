@@ -19,11 +19,17 @@ public class DefaultScheduler implements Scheduler {
 
     private final ScheduledExecutorService scheduledExecutorService;
 
+    /*
+    *  从配置文件构造定时器
+    * */
     public DefaultScheduler(NodeConfig config) {
         this(config.getMinElectionTimeout(), config.getMaxElectionTimeout(), config.getLogReplicationDelay(),
                 config.getLogReplicationInterval());
     }
 
+    /*
+     *  直接传参构造定时器
+     * */
     public DefaultScheduler(int minElectionTimeout, int maxElectionTimeout, int logReplicationDelay, int logReplicationInterval) {
         if (minElectionTimeout <= 0 || maxElectionTimeout <= 0 ||
         minElectionTimeout > maxElectionTimeout) {
@@ -47,6 +53,7 @@ public class DefaultScheduler implements Scheduler {
     @Override
     public ElectionTimeout scheduleElectionTimeout(Runnable task) {
         logger.debug("schedule election timeout");
+        // 在范围内随机一个超时时间，有效避免多个节点同时超时变成candidate
         int timeout = electionTimeoutRandom.nextInt(maxElectionTimeout - minElectionTimeout) + minElectionTimeout;
         ScheduledFuture<?> scheduledFuture = scheduledExecutorService.schedule(task, timeout, TimeUnit.MILLISECONDS);
         return new ElectionTimeout(scheduledFuture);
